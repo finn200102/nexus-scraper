@@ -1,6 +1,7 @@
 use clap::Parser;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use scraper::{Html, Selector};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -63,7 +64,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
             if let Some(solution) = res.solution {
                 if let Some(html) = solution.get("response").and_then(|r| r.as_str()) {
-                    tokio::fs::write("chapter.html", html).await?;
+                    let document = Html::parse_document(html);
+                    let selector = Selector::parse("div#storytext").unwrap();
+                    if let Some(div) = document.select(&selector).next() {
+                        let story_text = div.text().collect::<Vec<_>>().join(" ");
+                        tokio::fs::write("chapter.html", story_text).await?;
+                    }
+
                     println!("Chapter saved to chapter.html");
                 } else {
                     println!("No response field found in solution")
