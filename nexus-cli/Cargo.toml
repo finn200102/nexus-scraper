@@ -1,0 +1,10 @@
+[package]
+name = "nexus-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nexus-core = { path = "../nexus-core" }
+clap = { version = "4.5.40", features = ["derive"] }
+tokio = { version = "1.45.1", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
