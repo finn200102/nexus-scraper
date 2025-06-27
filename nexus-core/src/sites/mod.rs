@@ -10,6 +10,7 @@ pub trait Site {
     async fn fetch_chapter(
         &self,
         story_id: u64,
+        chapter_id: u64,
         chapter_number: u32,
         client: &reqwest::Client,
         ) -> Result<Chapter>;

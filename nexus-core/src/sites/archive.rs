@@ -14,14 +14,15 @@ impl Site for ArchiveSite{
     async fn fetch_chapter(
         &self,
         story_id: u64,
-        chapter_number: u32,
+        chapter_id: u64,
+        _chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://www.fanfiction.net/s/{}/{}", story_id, chapter_number);
+        let url = format!("https://archiveofourown.org/works/{}/chapters/{}", story_id, chapter_id);
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let chapter = parser::parse_fanfiction_chapter(&html);
+        let chapter = parser::parse_archive_chapter(&html);
 
         Ok(chapter)
 
