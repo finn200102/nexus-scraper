@@ -1,19 +1,67 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use nexus_core::error::Result;
 use nexus_core::sites::get_site;
 
 #[derive(Parser)]
 #[command(author, version, about)]
 struct Cli {
-    #[arg(long)]
-    site: String,
-    #[arg(long)]
-    author_id: u64,
-    #[arg(long)]
-    story_name: String,
-    #[arg(long, default_value = "1")]
-    chapter_number: u32,
+    #[command(subcommand)]
+    command: Commands,
 }
+
+#[derive(Subcommand)]
+enum Commands {
+    FetchChapter {
+        #[arg(long)]
+        site: String,
+        #[arg(long)]
+        story_id: u64,
+        #[arg(long, default_value = "1")]
+        chapter_number: u32,
+    },
+
+    FetchAuthorStories {
+        #[arg(long)]
+        site: String,
+        #[arg(long)]
+        author_id: u64,
+    }
+}
+
+
+async fn handle_fetch_chapter(
+    site: String,
+    story_id: u64,
+    chapter_number: u32,
+    client: &reqwest::Client,
+) -> Result<()> {
+
+    let site = get_site(&site)?;
+    let chapter = site.fetch_chapter(story_id, chapter_number, &client).await?;
+    let filename = format!("chapter{}.html", chapter_number);
+    tokio::fs::write(&filename, chapter.text).await?;
+    println!("Saved to {}", filename);
+    Ok(())
+
+}
+   
+async fn handle_fetch_author_stories(
+    site: String,
+    author_id: u64,
+    client: &reqwest::Client,
+) -> Result<()> {
+
+    let site = get_site(&site)?;
+    let stories = site.fetch_author_stories(author_id, &client).await?;
+    let filename = format!("author_{}_stories.json", author_id);
+    let json = serde_json::to_string_pretty(&stories)?;
+    tokio::fs::write(&filename, json).await?;
+    println!("Saved to {}", filename);
+    Ok(())
+
+}
+ 
+        
 
 #[tokio::main]
 async fn main() -> Result<()> { 
@@ -21,11 +69,22 @@ async fn main() -> Result<()> {
     
     let client = reqwest::Client::new();
 
-    let site = get_site(&args.site)?;
-    let chapter = site.fetch_chapter(args.author_id, &args.story_name, args.chapter_number, &client).await?;
-    let filename = format!("chapter{}.html", args.chapter_number);
-    tokio::fs::write(&filename, chapter.text).await?;
-    println!("Saved to {}", filename);
+    match args.command {
+        Commands::FetchChapter {
+            site,
+            story_id,
+            chapter_number,
+        } => {
+            handle_fetch_chapter(site, story_id, chapter_number, &client).await?;
+        }
+        Commands::FetchAuthorStories {
+            site,
+            author_id,
+        } => {
+            handle_fetch_author_stories(site, author_id, &client).await?;
+        }
+    }
     Ok(())
-   
 }
+
+
