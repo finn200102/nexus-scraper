@@ -17,6 +17,7 @@ struct Cli {
 struct ProxyRequest {
     cmd: String,
     url: String,
+    session: String,
     maxTimeout: u32,
 }
 
@@ -52,6 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             cmd: "request.get".to_string(),
             url: link,
             maxTimeout: 60000,
+            session: "fiction".into(),
             };
 
             let res = client
@@ -68,7 +70,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                     let selector = Selector::parse("div#storytext").unwrap();
                     if let Some(div) = document.select(&selector).next() {
                         let story_text = div.text().collect::<Vec<_>>().join(" ");
-                        tokio::fs::write("chapter.html", story_text).await?;
+                        let filename = format!("chapter{}.html", args.chapter);
+                        tokio::fs::write(filename, story_text).await?;
                     }
 
                     println!("Chapter saved to chapter.html");
