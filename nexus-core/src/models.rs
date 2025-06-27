@@ -11,6 +11,7 @@ pub struct Story {
     pub title: String,
     pub author: String,
     pub author_id: u64,
+    pub author_name: String,
     pub story_id: u64,
     pub chapters: Vec<Chapter>,
 

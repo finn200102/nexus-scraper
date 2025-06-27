@@ -2,6 +2,7 @@ use crate::models::{Chapter, Stories};
 use crate::error::Result;
 
 pub mod fanfiction;
+pub mod archive;
 #[async_trait::async_trait]
 pub trait Site {
     fn name(&self) -> &'static str;
@@ -17,6 +18,7 @@ pub trait Site {
     async fn fetch_author_stories(
         &self,
         author_id: u64,
+        author_name: String,
         client: &reqwest::Client,
     ) -> Result<Stories>;
 
@@ -28,6 +30,7 @@ pub trait Site {
 pub fn get_site(name: &str) -> Result<Box<dyn Site>> {
     match name {
         "fanfiction" => Ok(Box::new(fanfiction::FanFictionSite)),
+        "archive" => Ok(Box::new(archive::ArchiveSite)),
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }

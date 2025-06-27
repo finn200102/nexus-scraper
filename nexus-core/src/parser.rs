@@ -17,6 +17,48 @@ pub fn parse_fanfiction_chapter(html: &str) -> Chapter {
     }
 }
 
+pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
+
+    let document = Html::parse_document(html);
+
+    let story_selector = Selector::parse("div#main > ul > li").unwrap();
+
+    let mut stories = Vec::new();
+
+    for story_element in document.select(&story_selector) {
+        // Extract story title from element
+        let title_selector = Selector::parse("div h4 a").unwrap();
+
+        let title = story_element
+            .select(&title_selector)
+            .next()
+            .map(|a| a.text().collect::<Vec<_>>().join(" "))
+            .unwrap_or_else(|| "Story title not found".into());
+            
+
+        let story_id = story_element
+            .select(&title_selector)
+            .next()
+            .and_then(|e| e.value().attr("href"))
+            .and_then(|href| href.split('/').last())
+            .and_then(|id_str| id_str.parse::<u64>().ok())
+            .unwrap_or(0);
+
+
+        stories.push(Story {
+            title,
+            author: String::new(),
+            author_name: author_name.to_string(),
+            author_id: u64::MAX,
+            story_id,
+            chapters: Vec::new(),
+        });
+}
+
+    Stories {stories}
+
+
+}
 
 pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 
@@ -55,6 +97,7 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
                 title,
                 author: String::new(),
                 author_id,
+                author_name: String::new(),
                 story_id,
                 chapters: Vec::new(),
             });

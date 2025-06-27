@@ -3,12 +3,12 @@ use crate::error::Result;
 use crate::sites::Site;
 use crate::models::Stories;
 
-pub struct FanFictionSite;
+pub struct ArchiveSite;
 
 #[async_trait::async_trait]
-impl Site for FanFictionSite {
+impl Site for ArchiveSite{
     fn name(&self) -> &'static str {
-        "fanfiction"
+        "archive"
     }
 
     async fn fetch_chapter(
@@ -30,15 +30,15 @@ impl Site for FanFictionSite {
 
     async fn fetch_author_stories(
         &self,
-        author_id: u64,
-        _author_name: String,
+        _author_id: u64,
+        author_name: String,
         client: &reqwest::Client,
     ) -> Result<Stories> {
-        let url = format!("https://www.fanfiction.net/u/{}", author_id);
+        let url = format!("https://archiveofourown.org/users/{}/series", author_name);
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let stories = parser::parse_fanfiction_stories(&html, author_id);
+        let stories = parser::parse_archive_stories(&html, &author_name);
 
         Ok(stories)
     }

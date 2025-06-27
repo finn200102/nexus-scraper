@@ -23,8 +23,10 @@ enum Commands {
     FetchAuthorStories {
         #[arg(long)]
         site: String,
-        #[arg(long)]
+        #[arg(long, default_value = "0")]
         author_id: u64,
+        #[arg(long, default_value = "UNKNOWN")]
+        author_name: String,
     }
 }
 
@@ -48,11 +50,12 @@ async fn handle_fetch_chapter(
 async fn handle_fetch_author_stories(
     site: String,
     author_id: u64,
+    author_name: String,
     client: &reqwest::Client,
 ) -> Result<()> {
 
     let site = get_site(&site)?;
-    let stories = site.fetch_author_stories(author_id, &client).await?;
+    let stories = site.fetch_author_stories(author_id, author_name, &client).await?;
     let filename = format!("author_{}_stories.json", author_id);
     let json = serde_json::to_string_pretty(&stories)?;
     tokio::fs::write(&filename, json).await?;
@@ -80,8 +83,9 @@ async fn main() -> Result<()> {
         Commands::FetchAuthorStories {
             site,
             author_id,
+            author_name,
         } => {
-            handle_fetch_author_stories(site, author_id, &client).await?;
+            handle_fetch_author_stories(site, author_id, author_name, &client).await?;
         }
     }
     Ok(())
