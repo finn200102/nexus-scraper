@@ -825,6 +825,7 @@ dependencies = [
  "clap",
  "nexus-core",
  "reqwest",
+ "serde_json",
  "tokio",
 ]
 

@@ -1,4 +1,4 @@
-use crate::models::Chapter;
+use crate::models::{Chapter, Stories};
 use crate::error::Result;
 
 pub mod fanfiction;
@@ -8,11 +8,17 @@ pub trait Site {
 
     async fn fetch_chapter(
         &self,
-        author_id: u64,
-        story_name: &str,
+        story_id: u64,
         chapter_number: u32,
         client: &reqwest::Client,
         ) -> Result<Chapter>;
+
+
+    async fn fetch_author_stories(
+        &self,
+        author_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Stories>;
 
 
 }
@@ -25,5 +31,4 @@ pub fn get_site(name: &str) -> Result<Box<dyn Site>> {
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }
-
 

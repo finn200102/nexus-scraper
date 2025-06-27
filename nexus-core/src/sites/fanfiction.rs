@@ -1,6 +1,7 @@
 use crate::{network, parser, models::Chapter};
 use crate::error::Result;
 use crate::sites::Site;
+use crate::models::Stories;
 
 pub struct FanFictionSite;
 
@@ -12,12 +13,11 @@ impl Site for FanFictionSite {
 
     async fn fetch_chapter(
         &self,
-        author_id: u64,
-        story_name: &str,
+        story_id: u64,
         chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://www.fanfiction.net/s/{}/{}/{}", author_id, chapter_number, story_name);
+        let url = format!("https://www.fanfiction.net/s/{}/{}", story_id, chapter_number);
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -26,4 +26,20 @@ impl Site for FanFictionSite {
         Ok(chapter)
 
     }
+
+
+    async fn fetch_author_stories(
+        &self,
+        author_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Stories> {
+        let url = format!("https://www.fanfiction.net/u/{}", author_id);
+
+        let html = network::fetch_via_proxy(&url, client).await?;
+
+        let stories = parser::parse_fanfiction_stories(&html, author_id);
+
+        Ok(stories)
+    }
+
 }
