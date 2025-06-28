@@ -1,8 +1,8 @@
-use crate::{network, parser, models::Chapter};
+use crate::{network, models::Chapter};
 use crate::error::Result;
 use crate::sites::Site;
 use crate::models::Stories;
-
+use crate::parser::archive;
 pub struct ArchiveSite;
 
 #[async_trait::async_trait]
@@ -22,7 +22,7 @@ impl Site for ArchiveSite{
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let chapter = parser::parse_archive_chapter(&html, chapter_id);
+        let chapter = archive::parse_archive_chapter(&html, chapter_id);
 
         Ok(chapter)
 
@@ -36,7 +36,7 @@ impl Site for ArchiveSite{
     ) -> Result<Vec<Chapter>> {
         let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = parser::parse_archive_chapters(&html);
+        let chapters = archive::parse_archive_chapters(&html);
 
         Ok(chapters)
         
@@ -53,7 +53,7 @@ impl Site for ArchiveSite{
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let stories = parser::parse_archive_stories(&html, &author_name);
+        let stories = archive::parse_archive_stories(&html, &author_name);
 
         Ok(stories)
     }

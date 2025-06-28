@@ -1,7 +1,8 @@
-use crate::{network, parser, models::Chapter};
+use crate::{network, models::Chapter};
 use crate::error::Result;
 use crate::sites::Site;
 use crate::models::Stories;
+use crate::parser::fanfiction;
 
 pub struct FanFictionSite;
 
@@ -22,7 +23,7 @@ impl Site for FanFictionSite {
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let chapter = parser::parse_fanfiction_chapter(&html, chapter_number);
+        let chapter = fanfiction::parse_fanfiction_chapter(&html, chapter_number);
 
         Ok(chapter)
 
@@ -35,11 +36,12 @@ impl Site for FanFictionSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
-        let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = parser::parse_archive_chapters(&html);
+        unimplemented!("fetch_chapters is not yet implemented for FanFictionSite");
+        //let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
+        //let html = network::fetch_via_proxy(&url, client).await?;
+        //let chapters = fanfiction::parse_fanfiction_chapters(&html);
 
-        Ok(chapters)
+        //Ok(chapters)
         
     }
 
@@ -55,7 +57,7 @@ impl Site for FanFictionSite {
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let stories = parser::parse_fanfiction_stories(&html, author_id);
+        let stories = fanfiction::parse_fanfiction_stories(&html, author_id);
 
         Ok(stories)
     }
