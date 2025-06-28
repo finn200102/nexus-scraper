@@ -1,5 +1,6 @@
 use crate::{network, models::Chapter};
 use crate::error::Result;
+use crate::error::CoreError;
 use crate::sites::Site;
 use crate::models::Stories;
 use crate::parser::archive;
@@ -58,4 +59,21 @@ impl Site for ArchiveSite{
         Ok(stories)
     }
 
+
+    async fn fetch_stories_by_series(&self,
+        _medium_name: String,
+        _series_name: &str,
+        _sortby_id: u32,
+        _rating_id: u32,
+        _word_count: u32,
+        _time_range: u32,
+        client: &reqwest::Client,
+        ) -> Result<Stories> {
+        Err(CoreError::UnsupportedOperation(
+            "fetch_stories_by_series not supported for archive".into(),
+        ))
+    }
+
+
 }
+

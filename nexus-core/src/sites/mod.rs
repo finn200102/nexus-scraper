@@ -23,6 +23,17 @@ pub trait Site {
         client: &reqwest::Client,
     ) -> Result<Stories>;
 
+    async fn fetch_stories_by_series(
+        &self,
+        medium_name: String,
+        series_name: &str,
+        sortby_id: u32,
+        rating_id: u32,
+        word_count: u32,
+        time_range: u32,
+        client: &reqwest::Client,
+    ) -> Result<Stories>;
+
     async fn fetch_chapters(
         &self,
         story_id: u64,

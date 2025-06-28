@@ -101,3 +101,60 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
     Stories {stories}
 
 }
+
+pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
+
+    let document = Html::parse_document(html);
+
+    let selector = Selector::parse("div.z-list.zhover.zpointer").unwrap();
+
+    let mut stories = Vec::new();
+
+
+    for story_element in document.select(&selector) {
+        // Extract story title from element
+        let title_selector = Selector::parse("a.stitle").unwrap();
+        let a_selector = Selector::parse("a").unwrap();
+
+        let title = story_element
+            .select(&title_selector)
+            .next()
+            .and_then(|e| e.value().attr("href"))
+            .and_then(|href| href.split('/').last())
+            .unwrap_or("")
+            .to_string();
+
+        let story_id = story_element
+            .select(&title_selector)
+            .next()
+            .and_then(|e| e.value().attr("href"))
+            .and_then(|href| href.split('/').nth(2))
+            .and_then(|id_str| id_str.parse::<u64>().ok())
+            .unwrap_or(0);
+
+        let author_id = story_element
+            .select(&a_selector)
+            .nth(2)
+            .and_then(|e| e.value().attr("href"))
+            .and_then(|href| href.split("/").nth(2))
+            .and_then(|id_str| id_str.parse::<u64>().ok())
+            .unwrap_or(0);
+
+
+
+        stories.push(Story {
+            title,
+            author: String::new(),
+            author_id,
+            author_name: String::new(),
+            story_id,
+            chapters: Vec::new(),
+        });
+}
+
+    Stories {stories}
+
+}
+
+
+

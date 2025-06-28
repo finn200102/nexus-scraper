@@ -16,6 +16,9 @@ pub enum CoreError {
 
     #[error("Serialization error: {0}")]
     Serde(#[from] serde_json::Error),
+
+    #[error("UnsupportedOperation error: {0}")]
+    UnsupportedOperation(String),
 }
 
 pub type Result<T> = std::result::Result<T, CoreError>;

@@ -1,5 +1,6 @@
 use crate::{network, models::Chapter};
 use crate::error::Result;
+use crate::error::CoreError;
 use crate::sites::Site;
 use crate::models::Stories;
 use crate::parser::fanfiction;
@@ -60,5 +61,27 @@ impl Site for FanFictionSite {
 
         Ok(stories)
     }
+
+
+
+    async fn fetch_stories_by_series(
+        &self,
+        medium_name: String,
+        series_name: &str,
+        sortby_id: u32,
+        rating_id: u32,
+        word_count: u32,
+        time_range: u32,
+        client: &reqwest::Client,
+    ) -> Result<Stories> {
+        let url = format!("https://www.fanfiction.net/{}/{}/?&srt={}&r={}&len={}&t={}", medium_name, series_name, sortby_id, rating_id, word_count, time_range);
+
+        let html = network::fetch_via_proxy(&url, client).await?;
+
+        let stories = fanfiction::parse_fanfiction_stories_by_series(&html);
+
+        Ok(stories)
+    }
+
 
 }

@@ -36,9 +36,26 @@ enum Commands {
         author_id: u64,
         #[arg(long, default_value = "UNKNOWN")]
         author_name: String,
-    }
-}
+    },
 
+    FetchStoriesBySeries {
+        #[arg(long)]
+        site: String,
+        #[arg(long)]
+        medium_name: String,
+        #[arg(long)]
+        series_name: String,
+        #[arg(long, default_value = "4")]
+        sortby_id: u32,
+        #[arg(long, default_value = "10")]
+        rating_id: u32,
+        #[arg(long, default_value = "1")]
+        word_count: u32,
+        #[arg(long, default_value = "0")]
+        time_range: u32,
+    }
+        
+}
 
 async fn handle_fetch_chapter(
     site: String,
@@ -91,6 +108,26 @@ async fn handle_fetch_author_stories(
 
 }
  
+async fn handle_fetch_stories_by_series(
+    site: String,
+    medium_name: String,
+    series_name: String,
+    sortby_id: u32,
+    rating_id: u32,
+    word_count: u32,
+    time_range: u32,
+    client: &reqwest::Client,
+) -> Result<()> {
+
+    let site = get_site(&site)?;
+    let stories = site.fetch_stories_by_series(medium_name, &series_name, sortby_id, rating_id, word_count, time_range, &client).await?;
+    let filename = format!("stories_{}.json", series_name);
+    let json = serde_json::to_string_pretty(&stories)?;
+    tokio::fs::write(&filename, json).await?;
+    println!("Saved to {}", filename);
+    Ok(())
+
+}
         
 
 #[tokio::main]
@@ -121,6 +158,18 @@ async fn main() -> Result<()> {
         } => {
             handle_fetch_chapters(site, story_id, &client).await?;
         }
+        Commands::FetchStoriesBySeries {
+            site,
+            medium_name,
+            series_name,
+            sortby_id,
+            rating_id,
+            word_count,
+            time_range,
+        } => {
+            handle_fetch_stories_by_series(site, medium_name, series_name, sortby_id, rating_id, word_count, time_range, &client).await?;
+        }
+         
     }
     Ok(())
 }
