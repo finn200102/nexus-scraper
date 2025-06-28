@@ -1,0 +1,80 @@
+use scraper::{Html, Selector};
+use crate::models::{Chapter, Story, Stories};
+
+pub fn parse_spacebattles_pages(html: &str) -> Vec<u32> {
+    let document = Html::parse_document(html);
+
+    let ul_selector = Selector::parse("ul.pageNav-main").unwrap();
+    let li_selector = Selector::parse("li").unwrap();
+    let a_selector = Selector::parse("a").unwrap();
+
+    let ul = document.select(&ul_selector).next();
+    let last_li = ul
+        .and_then(|ul| ul.select(&li_selector).last());
+    let a = last_li
+        .and_then(|li| li.select(&a_selector).next());
+    let href = a
+        .and_then(|a| a.value().attr("href"))
+        .unwrap_or("");
+
+    let last_segment = href
+        .split('/')
+        .filter(|s| !s.is_empty())
+        .last()
+        .unwrap_or("");
+
+    let id_str = last_segment
+        .split('-')
+        .last()
+        .unwrap_or("");
+
+    let last_page = id_str
+        .parse::<u32>()
+        .unwrap_or(1);
+
+    vec![last_page]
+}
+
+pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
+    let document = Html::parse_document(html);
+    let post_selector = Selector::parse("article.message--post").unwrap();
+    let title_selector = Selector::parse("span.threadmarkLabel").unwrap();
+    let body_selector = Selector::parse("div.bbWrapper").unwrap();
+
+    let mut chapters = Vec::new();
+
+    for chapter_element in document.select(&post_selector) {
+        let chapter_id = chapter_element
+            .value()
+            .id()
+            .and_then(|id| id.strip_prefix("js-post-"))
+            .and_then(|post_id| post_id.parse::<u64>().ok());
+
+        if let Some(chapter_id) = chapter_id {
+            let title = chapter_element
+                .select(&title_selector)
+                .next()
+                .map(|el| el.text().collect::<String>())
+                .unwrap_or_else(|| "Untitled Chapter".into());
+
+            let text = chapter_element
+                .select(&body_selector)
+                .next()
+                .map(|el| el.text().collect::<String>())
+                .unwrap_or_default();
+
+            chapters.push(Chapter {
+                title,
+                text: "".into(),
+                chapter_id,
+                chapter_number: u32::MAX,
+            });
+        } else {
+            eprintln!("Warning: Chapter element missing valid ID");
+        }
+    }
+
+    chapters
+}
+
+

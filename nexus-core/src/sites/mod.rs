@@ -3,6 +3,7 @@ use crate::error::Result;
 
 pub mod fanfiction;
 pub mod archive;
+pub mod spacebattles;
 #[async_trait::async_trait]
 pub trait Site {
     fn name(&self) -> &'static str;
@@ -49,6 +50,7 @@ pub fn get_site(name: &str) -> Result<Box<dyn Site>> {
     match name {
         "fanfiction" => Ok(Box::new(fanfiction::FanFictionSite)),
         "archive" => Ok(Box::new(archive::ArchiveSite)),
+        "spacebattles" => Ok(Box::new(spacebattles::SpacebattlesSite)),
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }
