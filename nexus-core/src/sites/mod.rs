@@ -23,6 +23,12 @@ pub trait Site {
         client: &reqwest::Client,
     ) -> Result<Stories>;
 
+    async fn fetch_chapters(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Vec<Chapter>>;
+
 
 }
 

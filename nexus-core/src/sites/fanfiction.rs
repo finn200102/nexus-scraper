@@ -22,11 +22,27 @@ impl Site for FanFictionSite {
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let chapter = parser::parse_fanfiction_chapter(&html);
+        let chapter = parser::parse_fanfiction_chapter(&html, chapter_number);
 
         Ok(chapter)
 
     }
+
+
+    
+    async fn fetch_chapters(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Vec<Chapter>> {
+        let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let chapters = parser::parse_archive_chapters(&html);
+
+        Ok(chapters)
+        
+    }
+
 
 
     async fn fetch_author_stories(

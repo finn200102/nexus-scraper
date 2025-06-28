@@ -22,6 +22,13 @@ enum Commands {
         chapter_number: u32,
     },
 
+    FetchChapters {
+        #[arg(long)]
+        site: String,
+        #[arg(long)]
+        story_id: u64,
+    },
+
     FetchAuthorStories {
         #[arg(long)]
         site: String,
@@ -47,6 +54,21 @@ async fn handle_fetch_chapter(
     // chapter
     let filename = format!("chapter{}.html", chapter_number);
     tokio::fs::write(&filename, chapter.text).await?;
+    println!("Saved to {}", filename);
+    Ok(())
+
+}
+
+async fn handle_fetch_chapters(
+    site: String,
+    story_id: u64,
+    client: &reqwest::Client,
+) -> Result<()> {
+    let site = get_site(&site)?;
+    let chapters = site.fetch_chapters(story_id, &client).await?;
+    let filename = format!("chapters{}.json", story_id);
+    let json = serde_json::to_string_pretty(&chapters)?;
+    tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
 
@@ -92,6 +114,12 @@ async fn main() -> Result<()> {
             author_name,
         } => {
             handle_fetch_author_stories(site, author_id, author_name, &client).await?;
+        }
+        Commands::FetchChapters {
+            site,
+            story_id,
+        } => {
+            handle_fetch_chapters(site, story_id, &client).await?;
         }
     }
     Ok(())

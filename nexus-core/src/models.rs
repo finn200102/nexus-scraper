@@ -3,9 +3,9 @@ use serde::Serialize;
 pub struct Chapter {
     pub title: String,
     pub text: String,
+    pub chapter_number: u32,
+    pub chapter_id: u64,
 }
-
-
 #[derive(Debug, Serialize)]
 pub struct Story {
     pub title: String,

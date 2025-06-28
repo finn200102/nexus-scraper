@@ -22,10 +22,24 @@ impl Site for ArchiveSite{
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
-        let chapter = parser::parse_archive_chapter(&html);
+        let chapter = parser::parse_archive_chapter(&html, chapter_id);
 
         Ok(chapter)
 
+    }
+
+
+    async fn fetch_chapters(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Vec<Chapter>> {
+        let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let chapters = parser::parse_archive_chapters(&html);
+
+        Ok(chapters)
+        
     }
 
 

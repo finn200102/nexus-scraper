@@ -2,7 +2,7 @@ use scraper::{Html, Selector};
 use crate::models::{Chapter, Story, Stories};
 
 
-pub fn parse_fanfiction_chapter(html: &str) -> Chapter {
+pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
 
     let document = Html::parse_document(html);
     
@@ -15,13 +15,23 @@ pub fn parse_fanfiction_chapter(html: &str) -> Chapter {
     Chapter {
         title: "Chapter".into(),
         text,
+        chapter_number,
+        chapter_id: u64::MAX,
     }
 }
 
-pub fn parse_archive_chapter(html: &str) -> Chapter {
+pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
 
     let document = Html::parse_document(html);
     let selector = Selector::parse(r#"div#chapters > div > div[role="article"]"#).unwrap();
+    let chapter_number_selector = Selector::parse("div#chapters > div").unwrap();
+
+    let chapter_number = document.select(&chapter_number_selector)
+        .next()
+        .and_then(|e| e.value().attr("id"))
+        .and_then(|id_str| id_str.split('-').last())
+        .and_then(|number_str| number_str.parse::<u32>().ok())
+        .unwrap_or(0);
     
     let text = document.select(&selector)
         .next()
@@ -31,8 +41,40 @@ pub fn parse_archive_chapter(html: &str) -> Chapter {
     Chapter {
         title: "Chapter".into(),
         text,
+        chapter_id,
+        chapter_number,
     }
 }
+
+pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("div#main > ol > li").unwrap();
+
+    let mut chapters = Vec::new();
+
+    for chapter_element in document.select(&selector) {
+        let chapter_selector = Selector::parse("a").unwrap();
+        
+        let chapter_id = chapter_element
+            .select(&chapter_selector)
+            .next()
+            .and_then(|e| e.value().attr("href"))
+            .and_then(|href| href.split('/').last())
+            .and_then(|id_str| id_str.parse::<u64>().ok())
+            .unwrap_or(0);
+
+        chapters.push(Chapter {
+            title: "Chapter".into(),
+            text: "".into(),
+            chapter_id,
+            chapter_number: u32::MAX,
+        });
+    }
+
+    chapters
+}
+
+
 
 pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
 
