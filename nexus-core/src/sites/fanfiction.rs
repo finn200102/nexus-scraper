@@ -36,12 +36,11 @@ impl Site for FanFictionSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        unimplemented!("fetch_chapters is not yet implemented for FanFictionSite");
-        //let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
-        //let html = network::fetch_via_proxy(&url, client).await?;
-        //let chapters = fanfiction::parse_fanfiction_chapters(&html);
+        let url = format!("https://www.fanfiction.net/s/{}", story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let chapters = fanfiction::parse_fanfiction_chapters(&html);
 
-        //Ok(chapters)
+        Ok(chapters)
         
     }
 

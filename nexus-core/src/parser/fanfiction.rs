@@ -21,6 +21,39 @@ pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
 }
 
 
+
+pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("select#chap_select > option").unwrap();
+
+    let mut chapters = Vec::new();
+
+    for chapter_element in document.select(&selector) {
+        let chapter_number = chapter_element
+            .value()
+            .attr("value")
+            .and_then(|number_str| number_str.parse::<u32>().ok())
+            .unwrap_or(0);
+
+        let title = chapter_element
+            .text()
+            .collect::<String>()
+            .trim()
+            .to_string();
+
+        chapters.push(Chapter {
+            title, 
+            text: "".into(),
+            chapter_id: u64::MAX,
+            chapter_number,
+        });
+    }
+
+    chapters
+}
+
+
+
 pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 
     let document = Html::parse_document(html);
