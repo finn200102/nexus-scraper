@@ -16,13 +16,15 @@ impl Site for SpacebattlesSite {
     async fn fetch_chapter(
         &self,
         story_id: u64,
-        _chapter_id: u64,
-        chapter_number: u32,
+        chapter_id: u64,
+        _chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        Err(CoreError::UnsupportedOperation(
-            "fetch_chapter not supported for spacebattles".into(),
-        ))
+        let url = format!("https://forums.spacebattles.com/posts/{}", &chapter_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let chapter = spacebattles::parse_spacebattles_chapter(&html, chapter_id);
+
+        Ok(chapter)
  
     }
 

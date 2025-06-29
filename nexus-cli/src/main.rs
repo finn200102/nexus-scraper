@@ -14,7 +14,7 @@ enum Commands {
     FetchChapter {
         #[arg(long)]
         site: String,
-        #[arg(long)]
+        #[arg(long, default_value = "0")]
         story_id: u64,
         #[arg(long, default_value = "0")]
         chapter_id: u64,

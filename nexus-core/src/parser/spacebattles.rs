@@ -78,3 +78,30 @@ pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
 }
 
 
+pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
+
+    let document = Html::parse_document(html);
+    let article_selector = format!("article#js-post-{}", chapter_id);
+    let article = Selector::parse(&article_selector).unwrap();
+    let title_selector = Selector::parse("span.threadmarkLabel").unwrap();
+    let text_selector = Selector::parse("div.bbWrapper").unwrap();
+
+    let article_element = document.select(&article).next();
+
+    let text = article_element
+        .and_then(|el| el.select(&text_selector).next())
+        .map(|el| el.text().collect::<String>())
+        .unwrap_or_default();
+
+    let title = article_element
+        .and_then(|el| el.select(&title_selector).next())
+        .map(|el| el.text().collect::<String>())
+        .unwrap_or_else(|| "Untitled Chapter".into());
+
+    Chapter {
+        title,
+        text,
+        chapter_number: u32::MAX,
+        chapter_id,
+    }
+}
