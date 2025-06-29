@@ -42,6 +42,15 @@ pub trait Site {
     ) -> Result<Vec<Chapter>>;
 
 
+
+    async fn fetch_stories(
+        &self,
+        sortby_id: u32,
+        client: &reqwest::Client,
+    ) -> Result<Stories>;
+
+
+
 }
 
 

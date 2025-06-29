@@ -75,5 +75,29 @@ impl Site for SpacebattlesSite {
  
    }
 
+    async fn fetch_stories(
+        &self,
+        sortby_id: u32,
+        client: &reqwest::Client,
+    ) -> Result<Stories> {
+        let sortby_name = sortby_id_to_name(sortby_id);
+        let url = format!("https://forums.spacebattles.com/forums/creative-writing.18/?order={}", sortby_name);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let chapters = spacebattles::parse_spacebattles_stories(&html);
+
+        Ok(chapters)
+
+    }
+
+
 
 }
+
+
+fn sortby_id_to_name(sortby_id: u32) -> &'static str {
+    match sortby_id {
+        0 => "last_threadmark",
+        _ => "Unknown",
+    }
+}
+

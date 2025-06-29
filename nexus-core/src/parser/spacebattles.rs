@@ -105,3 +105,53 @@ pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
         chapter_id,
     }
 }
+pub fn parse_spacebattles_stories(html: &str) -> Stories {
+    let document = Html::parse_document(html);
+
+    let story_selector = Selector::parse("div.structItem-cell--main").unwrap();
+    let title_selector = Selector::parse("div.structItem-title > a").unwrap();
+    let author_selector = Selector::parse("ul.structItem-parts > li > a.username").unwrap();
+
+    let mut stories = Vec::new();
+
+    for story_element in document.select(&story_selector) {
+        // Thread title and ID
+        let (title_slug, story_id) = story_element
+            .select(&title_selector)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|href| href.split('/').nth(2)) 
+            .and_then(|part| {
+                let mut split = part.split('.');
+                let slug = split.next()?.to_string();
+                let id = split.next()?.parse::<u64>().ok()?;
+                Some((slug, id))
+            })
+            .unwrap_or_else(|| ("unknown-title".into(), 0));
+
+        // Author name and ID
+        let (author_slug, author_id) = story_element
+            .select(&author_selector)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|href| href.split('/').nth(2)) 
+            .and_then(|part| {
+                let mut split = part.split('.');
+                let slug = split.next()?.to_string();
+                let id = split.next()?.parse::<u64>().ok()?;
+                Some((slug, id))
+            })
+            .unwrap_or_else(|| ("unknown-author".into(), 0));
+
+        stories.push(Story {
+            title: title_slug,
+            author_name: author_slug,
+            author_id,
+            story_id,
+            chapters: Vec::new(),
+        });
+    }
+
+    Stories { stories }
+}
+

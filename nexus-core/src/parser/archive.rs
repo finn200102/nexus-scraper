@@ -88,7 +88,6 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
 
         stories.push(Story {
             title,
-            author: String::new(),
             author_name: author_name.to_string(),
             author_id: u64::MAX,
             story_id,

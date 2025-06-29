@@ -75,5 +75,20 @@ impl Site for ArchiveSite{
     }
 
 
+
+
+    async fn fetch_stories(
+        &self,
+        sortby_id: u32,
+        client: &reqwest::Client,
+    ) -> Result<Stories> {
+         Err(CoreError::UnsupportedOperation(
+            "fetch_stories not supported for archive".into(),
+        ))
+        
+    }
+
+
+
 }
 

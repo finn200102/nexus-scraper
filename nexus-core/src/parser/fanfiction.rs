@@ -89,7 +89,6 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 
             stories.push(Story {
                 title,
-                author: String::new(),
                 author_id,
                 author_name: String::new(),
                 story_id,
@@ -144,7 +143,6 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
 
         stories.push(Story {
             title,
-            author: String::new(),
             author_id,
             author_name: String::new(),
             story_id,
