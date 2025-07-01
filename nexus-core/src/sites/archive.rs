@@ -2,7 +2,7 @@ use crate::{network, models::Chapter};
 use crate::error::Result;
 use crate::error::CoreError;
 use crate::sites::Site;
-use crate::models::Stories;
+use crate::models::{Stories, Story};
 use crate::parser::archive;
 pub struct ArchiveSite;
 
@@ -80,8 +80,9 @@ impl Site for ArchiveSite{
     async fn fetch_stories(
         &self,
         sortby_id: u32,
+        num_pages: u32,
         client: &reqwest::Client,
-    ) -> Result<Stories> {
+    ) -> Result<Vec<Story>> {
          Err(CoreError::UnsupportedOperation(
             "fetch_stories not supported for archive".into(),
         ))

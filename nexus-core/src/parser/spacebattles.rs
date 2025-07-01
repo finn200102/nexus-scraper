@@ -98,7 +98,7 @@ pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
         ..Default::default()
     }
 }
-pub fn parse_spacebattles_stories(html: &str) -> Stories {
+pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
     let document = Html::parse_document(html);
 
     let story_selector = Selector::parse("div.structItem-cell--main").unwrap();
@@ -145,7 +145,6 @@ pub fn parse_spacebattles_stories(html: &str) -> Stories {
             ..Default::default()
         });
     }
-
-    Stories { stories }
+    stories
 }
 

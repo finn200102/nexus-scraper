@@ -2,7 +2,7 @@ use crate::{network, models::Chapter};
 use crate::error::Result;
 use crate::error::CoreError;
 use crate::sites::Site;
-use crate::models::Stories;
+use crate::models::{Story, Stories};
 use crate::parser::spacebattles;
 
 pub struct SpacebattlesSite;
@@ -85,14 +85,19 @@ impl Site for SpacebattlesSite {
     async fn fetch_stories(
         &self,
         sortby_id: u32,
+        num_pages: u32,
         client: &reqwest::Client,
-    ) -> Result<Stories> {
+        
+    ) -> Result<Vec<Story>> {
         let sortby_name = sortby_id_to_name(sortby_id);
-        let url = format!("https://forums.spacebattles.com/forums/creative-writing.18/?order={}", sortby_name);
-        let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = spacebattles::parse_spacebattles_stories(&html);
-
-        Ok(chapters)
+        let mut all_stories = Vec::new();
+        for page_number in 1..num_pages {
+            let url = format!("https://forums.spacebattles.com/forums/creative-writing.18/page-{}?order={}", page_number, sortby_name);
+            let html = network::fetch_via_proxy(&url, client).await?;
+            let stories = spacebattles::parse_spacebattles_stories(&html);
+            all_stories.extend(stories);
+        }
+        Ok(all_stories)
 
     }
 

@@ -43,6 +43,8 @@ enum Commands {
         site: String,
         #[arg(long, default_value = "0")]
         sortby_id: u32,
+        #[arg(long, default_value = "2")]
+        num_pages: u32,
     },
 
     FetchStoriesBySeries {
@@ -141,11 +143,12 @@ async fn handle_fetch_stories_by_series(
 async fn handle_fetch_stories(
     site: String,
     sortby_id: u32,
+    num_pages: u32,
     client: &reqwest::Client,
 ) -> Result<()> {
 
     let site = get_site(&site)?;
-    let stories = site.fetch_stories(sortby_id, &client).await?;
+    let stories = site.fetch_stories(sortby_id, num_pages, &client).await?;
     let filename = format!("stories_{}.json", sortby_id);
     let json = serde_json::to_string_pretty(&stories)?;
     tokio::fs::write(&filename, json).await?;
@@ -199,8 +202,9 @@ async fn main() -> Result<()> {
          Commands::FetchStories {
             site,
             sortby_id,
+            num_pages,
         } => {
-            handle_fetch_stories(site, sortby_id, &client).await?;
+            handle_fetch_stories(site, sortby_id, num_pages, &client).await?;
         }
     }
     Ok(())

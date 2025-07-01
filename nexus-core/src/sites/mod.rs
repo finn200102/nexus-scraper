@@ -1,4 +1,4 @@
-use crate::models::{Chapter, Stories};
+use crate::models::{Chapter, Stories, Story};
 use crate::error::Result;
 
 pub mod fanfiction;
@@ -46,8 +46,9 @@ pub trait Site {
     async fn fetch_stories(
         &self,
         sortby_id: u32,
+        num_pages: u32,
         client: &reqwest::Client,
-    ) -> Result<Stories>;
+    ) -> Result<Vec<Story>>;
 
 
 
