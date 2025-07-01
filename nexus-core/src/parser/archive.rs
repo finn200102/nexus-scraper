@@ -20,10 +20,10 @@ pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
         .unwrap_or_else(|| "Chapter not found".into());
 
     Chapter {
-        title: "Chapter".into(),
-        text,
-        chapter_id,
-        chapter_number,
+        text: Some(text),
+        chapter_id: Some(chapter_id),
+        chapter_number: Some(chapter_number),
+        ..Default::default()
     }
 }
 
@@ -46,10 +46,8 @@ pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
             .unwrap_or(0);
 
         chapters.push(Chapter {
-            title: "Chapter".into(),
-            text: "".into(),
-            chapter_id,
-            chapter_number: u32::MAX,
+            chapter_id: Some(chapter_id),
+            ..Default::default()
         });
     }
 
@@ -87,11 +85,10 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
 
 
         stories.push(Story {
-            title,
-            author_name: author_name.to_string(),
-            author_id: u64::MAX,
-            story_id,
-            chapters: Vec::new(),
+            title: Some(title),
+            author_name: Some(author_name.to_string()),
+            story_id: Some(story_id),
+            ..Default::default()
         });
 }
 

@@ -77,7 +77,7 @@ async fn handle_fetch_chapter(
     // TODO: check if the chapter_number was give or if chapter_number must be extracted from
     // chapter
     let filename = format!("chapter{}.html", chapter_number);
-    tokio::fs::write(&filename, chapter.text).await?;
+    tokio::fs::write(&filename, chapter.text.unwrap_or_else(|| String::new())).await?;
     println!("Saved to {}", filename);
     Ok(())
 

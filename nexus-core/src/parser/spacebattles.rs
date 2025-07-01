@@ -64,10 +64,9 @@ pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
                 .unwrap_or_default();
 
             chapters.push(Chapter {
-                title,
-                text: "".into(),
-                chapter_id,
-                chapter_number: u32::MAX,
+                title: Some(title),
+                chapter_id: Some(chapter_id),
+                ..Default::default()
             });
         } else {
             eprintln!("Warning: Chapter element missing valid ID");
@@ -99,10 +98,10 @@ pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
         .unwrap_or_else(|| "Untitled Chapter".into());
 
     Chapter {
-        title,
-        text,
-        chapter_number: u32::MAX,
-        chapter_id,
+        title: Some(title),
+        text: Some(text),
+        chapter_id: Some(chapter_id),
+        ..Default::default()
     }
 }
 pub fn parse_spacebattles_stories(html: &str) -> Stories {
@@ -144,11 +143,11 @@ pub fn parse_spacebattles_stories(html: &str) -> Stories {
             .unwrap_or_else(|| ("unknown-author".into(), 0));
 
         stories.push(Story {
-            title: title_slug,
-            author_name: author_slug,
-            author_id,
-            story_id,
-            chapters: Vec::new(),
+            title: Some(title_slug),
+            author_name: Some(author_slug),
+            author_id: Some(author_id),
+            story_id: Some(story_id),
+            ..Default::default()
         });
     }
 
