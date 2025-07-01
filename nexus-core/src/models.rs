@@ -1,6 +1,7 @@
 use serde::Serialize;
 #[derive(Debug, Serialize, Default)]
 pub struct Chapter {
+    pub site: String,
     pub title: Option<String>,
     pub text: Option<String>,
     pub chapter_number: Option<u32>,
@@ -8,6 +9,7 @@ pub struct Chapter {
 }
 #[derive(Debug, Serialize, Default)]
 pub struct Story {
+    pub site: String,
     pub title: Option<String>,
     pub author_id: Option<u64>,
     pub author_name: Option<String>,

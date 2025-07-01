@@ -13,6 +13,7 @@ pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
         .unwrap_or_else(|| "Chapter not found".into());
 
     Chapter {
+        site: "fanfiction".to_string(),
         text: Some(text),
         chapter_number: Some(chapter_number),
         ..Default::default()
@@ -41,6 +42,7 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
             .to_string();
 
         chapters.push(Chapter {
+            site: "fanfiction".to_string(),
             title: Some(title), 
             chapter_number: Some(chapter_number),
             ..Default::default()
@@ -86,6 +88,7 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 
 
             stories.push(Story {
+                site: "fanfiction".to_string(),
                 title: Some(title),
                 author_id: Some(author_id),
                 story_id: Some(story_id),
@@ -139,6 +142,7 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
 
 
         stories.push(Story {
+            site: "fanfiction".to_string(),
             title: Some(title),
             author_id: Some(author_id),
             story_id: Some(story_id),

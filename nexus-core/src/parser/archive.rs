@@ -20,6 +20,7 @@ pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
         .unwrap_or_else(|| "Chapter not found".into());
 
     Chapter {
+        site: "archive".to_string(),
         text: Some(text),
         chapter_id: Some(chapter_id),
         chapter_number: Some(chapter_number),
@@ -46,6 +47,7 @@ pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
             .unwrap_or(0);
 
         chapters.push(Chapter {
+            site: "archive".to_string(),
             chapter_id: Some(chapter_id),
             ..Default::default()
         });
@@ -85,6 +87,7 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
 
 
         stories.push(Story {
+            site: "archive".to_string(),
             title: Some(title),
             author_name: Some(author_name.to_string()),
             story_id: Some(story_id),

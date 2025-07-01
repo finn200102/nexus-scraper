@@ -64,6 +64,7 @@ pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
                 .unwrap_or_default();
 
             chapters.push(Chapter {
+                site: "spacebattles".to_string(),
                 title: Some(title),
                 chapter_id: Some(chapter_id),
                 ..Default::default()
@@ -98,6 +99,7 @@ pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
         .unwrap_or_else(|| "Untitled Chapter".into());
 
     Chapter {
+        site: "spacebattles".to_string(),
         title: Some(title),
         text: Some(text),
         chapter_id: Some(chapter_id),
@@ -143,6 +145,7 @@ pub fn parse_spacebattles_stories(html: &str) -> Stories {
             .unwrap_or_else(|| ("unknown-author".into(), 0));
 
         stories.push(Story {
+            site: "spacebattles".to_string(),
             title: Some(title_slug),
             author_name: Some(author_slug),
             author_id: Some(author_id),
