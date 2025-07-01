@@ -1,39 +1,31 @@
 use scraper::{Html, Selector};
 use crate::models::{Chapter, Story, Stories};
 
-pub fn parse_spacebattles_pages(html: &str) -> Vec<u32> {
+pub fn parse_spacebattles_pages(html: &str) -> u32 {
     let document = Html::parse_document(html);
 
     let ul_selector = Selector::parse("ul.pageNav-main").unwrap();
     let li_selector = Selector::parse("li").unwrap();
     let a_selector = Selector::parse("a").unwrap();
 
-    let ul = document.select(&ul_selector).next();
-    let last_li = ul
-        .and_then(|ul| ul.select(&li_selector).last());
-    let a = last_li
-        .and_then(|li| li.select(&a_selector).next());
-    let href = a
+    let last_page = document
+        .select(&ul_selector)
+        .next()
+        .and_then(|ul| ul.select(&li_selector).last())
+        .and_then(|li| li.select(&a_selector).next())
         .and_then(|a| a.value().attr("href"))
-        .unwrap_or("");
-
-    let last_segment = href
-        .split('/')
-        .filter(|s| !s.is_empty())
-        .last()
-        .unwrap_or("");
-
-    let id_str = last_segment
-        .split('-')
-        .last()
-        .unwrap_or("");
-
-    let last_page = id_str
-        .parse::<u32>()
+        .and_then(|href| {
+            href.split('/')
+                .filter(|s| !s.is_empty())
+                .last()
+                .and_then(|segment| segment.split('-').last())
+                .and_then(|s| s.parse::<u32>().ok())
+        })
         .unwrap_or(1);
 
-    vec![last_page]
+    last_page
 }
+
 
 pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
     let document = Html::parse_document(html);

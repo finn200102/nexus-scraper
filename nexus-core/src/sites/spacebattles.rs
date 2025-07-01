@@ -35,11 +35,18 @@ impl Site for SpacebattlesSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://forums.spacebattles.com/threads/{}/reader/page-{}", story_id, 1);
-        let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = spacebattles::parse_spacebattles_chapters(&html);
-
-        Ok(chapters)
+        let first_url = format!("https://forums.spacebattles.com/threads/{}/reader/page-1", story_id);
+        let first_html = network::fetch_via_proxy(&first_url, client).await?;
+        let pages = spacebattles::parse_spacebattles_pages(&first_html) + 1;
+        let mut all_chapters = Vec::new();
+        // pages+1 TODO find out why
+        for page_number in 1..pages {
+            let url = format!("https://forums.spacebattles.com/threads/{}/reader/page-{}", story_id, page_number);
+            let html = network::fetch_via_proxy(&url, client).await?;
+            let chapters = spacebattles::parse_spacebattles_chapters(&html);
+            all_chapters.extend(chapters);
+        }
+        Ok(all_chapters)
         
     }
 
