@@ -1,8 +1,8 @@
-use crate::{network, models::Chapter};
+use crate::{network};
 use crate::error::Result;
 use crate::error::CoreError;
 use crate::sites::Site;
-use crate::models::{Story, Stories};
+use crate::models::{Story, Stories, Chapter, Author};
 use crate::parser::spacebattles;
 
 pub struct SpacebattlesSite;
@@ -101,6 +101,29 @@ impl Site for SpacebattlesSite {
 
     }
 
+
+     async fn get_story_data_from_url(
+            &self,
+            url: String,
+            client: &reqwest::Client,
+        ) -> Result<Story> {
+             Err(CoreError::UnsupportedOperation(
+                "fetch_stories not supported for spacebattles".into(),
+            ))
+         
+        }
+    async fn fetch_author(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Author> {
+        let url = format!("https://forums.spacebattles.com/threads/{}", &story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let author = spacebattles::parse_author_from_story(&html);
+
+        Ok(author)
+
+        }
 
 
 }

@@ -2,7 +2,7 @@ use crate::{network, models::Chapter};
 use crate::error::Result;
 use crate::error::CoreError;
 use crate::sites::Site;
-use crate::models::{Stories, Story};
+use crate::models::{Stories, Story, Author};
 use crate::parser::fanfiction;
 
 pub struct FanFictionSite;
@@ -96,5 +96,24 @@ impl Site for FanFictionSite {
         
     }
 
-
+    async fn get_story_data_from_url(
+        &self,
+        url: String,
+        client: &reqwest::Client,
+    ) -> Result<Story> {
+         Err(CoreError::UnsupportedOperation(
+            "fetch_stories not supported for fanfiction".into(),
+        ))
+     
+    }
+    async fn fetch_author(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Author> {
+            Err(CoreError::UnsupportedOperation(
+                "fetch_stories not supported for fanfiction".into(),
+            ))
+         
+        }
 }

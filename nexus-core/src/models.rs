@@ -24,3 +24,9 @@ pub struct Stories {
     pub stories: Vec<Story>,
 
 }
+
+#[derive(Debug, Serialize, Default)]
+pub struct Author {
+    pub author_name: Option<String>,
+    pub author_id: Option<u64>,
+}

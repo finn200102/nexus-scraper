@@ -1,5 +1,5 @@
 use scraper::{Html, Selector};
-use crate::models::{Chapter, Story, Stories};
+use crate::models::{Chapter, Story, Stories, Author};
 
 pub fn parse_spacebattles_pages(html: &str) -> u32 {
     let document = Html::parse_document(html);
@@ -146,5 +146,30 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
         });
     }
     stories
+}
+
+
+pub fn parse_author_from_story (html: &str) -> Author {
+    // parse author on story site to get name and id
+    let document = Html::parse_document(html);
+    let author_selector = Selector::parse("a.username").unwrap();
+
+    let (author_name, author_id) = document 
+            .select(&author_selector)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|href| href.split('/').nth(2)) 
+            .and_then(|part| {
+                let mut split = part.split('.');
+                let slug = split.next()?.to_string();
+                let id = split.next()?.parse::<u64>().ok()?;
+                Some((slug, id))
+            })
+            .unwrap_or_else(|| ("unknown-author".into(), 0));
+
+    Author {
+        author_name: Some(author_name),
+        author_id: Some(author_id),
+    }
 }
 

@@ -1,4 +1,4 @@
-use crate::models::{Chapter, Stories, Story};
+use crate::models::{Chapter, Stories, Story, Author};
 use crate::error::Result;
 
 pub mod fanfiction;
@@ -50,7 +50,17 @@ pub trait Site {
         client: &reqwest::Client,
     ) -> Result<Vec<Story>>;
 
+    async fn get_story_data_from_url(
+        &self,
+        url: String,
+        client: &reqwest::Client,
+    ) -> Result<Story>;
 
+    async fn fetch_author(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+    ) -> Result<Author>;
 
 }
 
