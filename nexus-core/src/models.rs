@@ -10,7 +10,6 @@ pub struct Chapter {
 #[derive(Debug, Serialize, Default)]
 pub struct Story {
     pub site: String,
-    pub title: Option<String>,
     pub author_id: Option<u64>,
     pub author_name: Option<String>,
     pub story_id: Option<u64>,

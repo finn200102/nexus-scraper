@@ -88,7 +88,7 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
 
         stories.push(Story {
             site: "archive".to_string(),
-            title: Some(title),
+            story_name: Some(title),
             author_name: Some(author_name.to_string()),
             story_id: Some(story_id),
             ..Default::default()

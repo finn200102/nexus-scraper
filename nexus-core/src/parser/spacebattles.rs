@@ -138,7 +138,7 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
 
         stories.push(Story {
             site: "spacebattles".to_string(),
-            title: Some(title_slug),
+            story_name: Some(title_slug),
             author_name: Some(author_slug),
             author_id: Some(author_id),
             story_id: Some(story_id),

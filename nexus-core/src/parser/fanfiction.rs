@@ -89,7 +89,7 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 
             stories.push(Story {
                 site: "fanfiction".to_string(),
-                title: Some(title),
+                story_name: Some(title),
                 author_id: Some(author_id),
                 story_id: Some(story_id),
                 ..Default::default()
@@ -143,7 +143,7 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
 
         stories.push(Story {
             site: "fanfiction".to_string(),
-            title: Some(title),
+            story_name: Some(title),
             author_id: Some(author_id),
             story_id: Some(story_id),
             ..Default::default()
