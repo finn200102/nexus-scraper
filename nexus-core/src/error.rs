@@ -19,6 +19,10 @@ pub enum CoreError {
 
     #[error("UnsupportedOperation error: {0}")]
     UnsupportedOperation(String),
+
+    #[error("Invalid Url error: {0}")]
+    InvalidUrl(String),
+
 }
 
 pub type Result<T> = std::result::Result<T, CoreError>;
