@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use nexus_core::sites::{get_site, Site as CoreSite};
+use nexus_core::sites::{get_site, Site as Site};
 use pyo3_asyncio::tokio::future_into_py;
 use std::sync::Arc;
 use reqwest::Client;
