@@ -54,6 +54,13 @@ enum Commands {
         story_id: u64,
     },
 
+    GetStoryDataFromUrl {
+        #[arg(long)]
+        site: String,
+        #[arg(long)]
+        url: String,
+    },
+
     FetchStoriesBySeries {
         #[arg(long)]
         site: String,
@@ -161,6 +168,22 @@ async fn handle_fetch_stories_by_series(
 }
 
 
+async fn handle_get_story_data_from_url(
+    site: String,
+    url: String,
+    client: &reqwest::Client,
+) -> Result<()> {
+    let site = get_site(&site)?;
+    let story = site.get_story_data_from_url(&url, &client).await?;
+    let filename = format!("story.json");
+    let json = serde_json::to_string_pretty(&story)?;
+    tokio::fs::write(&filename, json).await?;
+    println!("Saved to {}", filename);
+    Ok(())
+
+}
+
+
  
 async fn handle_fetch_stories(
     site: String,
@@ -234,6 +257,13 @@ async fn main() -> Result<()> {
              story_id,
          } => {
              handle_fetch_author(site, story_id, &client).await?;
+         }
+
+         Commands::GetStoryDataFromUrl {
+             site,
+             url,
+         } => {
+             handle_get_story_data_from_url(site, url, &client).await?;
          }
     }
     Ok(())

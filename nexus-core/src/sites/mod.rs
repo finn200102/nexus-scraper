@@ -52,7 +52,7 @@ pub trait Site {
 
     async fn get_story_data_from_url(
         &self,
-        url: String,
+        url: &str,
         client: &reqwest::Client,
     ) -> Result<Story>;
 

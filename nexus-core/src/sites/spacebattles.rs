@@ -104,14 +104,34 @@ impl Site for SpacebattlesSite {
 
      async fn get_story_data_from_url(
             &self,
-            url: String,
+            url: &str,
             client: &reqwest::Client,
         ) -> Result<Story> {
-             Err(CoreError::UnsupportedOperation(
-                "fetch_stories not supported for spacebattles".into(),
-            ))
-         
-        }
+        let (story_name, story_id) = { 
+        let trimmed_url = url.trim_end_matches('/').to_string();
+        let last_segment = trimmed_url.rsplit('/').next().unwrap_or_default();
+        let (name_part, id_part) = last_segment.rsplit_once('.').unwrap_or((last_segment, ""));
+        (name_part.to_string(), id_part.to_string())
+    };
+        let story_id: u64 = story_id.parse()
+        .map_err(|e| CoreError::Parse(format!("Failed to parse story_id '{}': {}", story_id, e)))?;
+
+        let chapters = self.fetch_chapters(story_id, &client).await?;
+        let author_data = self.fetch_author(story_id, &client).await?;
+        let author_name = author_data.author_name; 
+        let author_id = author_data.author_id;     
+
+        Ok(Story{
+            story_name: Some(story_name),
+            story_id: Some(story_id),
+            chapters: chapters,
+            author_name: author_name,
+            author_id: author_id,
+            site: "spacebattles".to_string(),
+        })
+
+     }
+
     async fn fetch_author(
         &self,
         story_id: u64,
