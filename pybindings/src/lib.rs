@@ -30,7 +30,7 @@ impl PySite {
         let site = get_site(name)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(Self {
-            site: Arc::<dyn Site + Send + Sync>::from(site),
+            site,
             client: Client::new(),
         })
     }

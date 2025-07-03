@@ -1,5 +1,6 @@
 use crate::models::{Chapter, Stories, Story, Author};
 use crate::error::Result;
+use std::sync::Arc;
 
 pub mod fanfiction;
 pub mod archive;
@@ -66,11 +67,11 @@ pub trait Site {
 
 
 
-pub fn get_site(name: &str) -> Result<Box<dyn Site>> {
+pub fn get_site(name: &str) -> Result<Arc<dyn Site + Send + Sync>> {
     match name {
-        "fanfiction" => Ok(Box::new(fanfiction::FanFictionSite)),
-        "archive" => Ok(Box::new(archive::ArchiveSite)),
-        "spacebattles" => Ok(Box::new(spacebattles::SpacebattlesSite)),
+        "fanfiction" => Ok(Arc::new(fanfiction::FanFictionSite)),
+        "archive" => Ok(Arc::new(archive::ArchiveSite)),
+        "spacebattles" => Ok(Arc::new(spacebattles::SpacebattlesSite)),
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }
