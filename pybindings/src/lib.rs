@@ -1,5 +1,8 @@
 use pyo3::prelude::*;
 use nexus_core::sites::{get_site, Site as CoreSite};
+use pyo3_asyncio::tokio::future_into_py;
+use std::sync::Arc;
+use reqwest::Client;
 
 #[pyclass]
 struct PyChapter {
@@ -17,34 +20,50 @@ struct PyChapter {
 
 #[pyclass]
 struct PySite {
-    site: CoreSite,
+    site: Arc<dyn Site + Send + Sync>,
+    client: Client,
 }
-
 #[pymethods]
 impl PySite {
     #[new]
-    fn new(name: &str) -> Self {
-        Self {
-            site: get_site(name),
-        }
+    fn new(name: &str) -> PyResult<Self> {
+        let site = get_site(name)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+        Ok(Self {
+            site: Arc::from(site),
+            client: Client::new(),
+        })
     }
 
-    fn fetch_chapter(&self, story_id: &str, chapter_id: u64, chapter_number: u32) -> PyChapter {
-        let chapter = self.site.fetch(story_id, chapter_id, chapter_number);
-        PyChapter {
-            site: story.site,
-            title: story.title,
-            text: story.text,
-            chapter_number: story.chapter_number,
-            chapter_id: story.chapter_id,
-        }
-    }
-}
+    fn fetch_chapter<'py>(
+        &'py self,
+        py: Python<'py>,
+        story_id: u64,
+        chapter_id: u64,
+        chapter_number: u32,
+    ) -> PyResult<&'py PyAny> {
+        let site = self.site.clone();
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let chapter = site
+                .fetch_chapter(story_id, chapter_id, chapter_number, &client)
+                .await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
 
-#[pymodule]
-fn pybindings(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<PySite>()?;
-    m.add_class::<PyChapter>()?;
-    Ok(())
+            Python::with_gil(|py| {
+                Ok(Py::new(
+                    py,
+                    PyChapter {
+                        site: chapter.site,
+                        title: chapter.title,
+                        text: chapter.text,
+                        chapter_number: chapter.chapter_number,
+                        chapter_id: chapter.chapter_id,
+                    },
+                )?
+                .into_py(py))
+            })
+        })
+    }
 }
 
