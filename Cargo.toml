@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "nexus-core",
-    "nexus-cli"
+    "nexus-cli",
+    "pybindings"
 ]
 resolver = "2"
 
