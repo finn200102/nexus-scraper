@@ -30,7 +30,7 @@ impl PySite {
         let site = get_site(name)
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(Self {
-            site: Arc::from(site),
+            site: Arc::<dyn Site + Send + Sync>::from(site)
             client: Client::new(),
         })
     }
@@ -54,12 +54,14 @@ impl PySite {
                 Ok(Py::new(
                     py,
                     PyChapter {
-                        site: chapter.site,
-                        title: chapter.title,
-                        text: chapter.text,
-                        chapter_number: chapter.chapter_number,
-                        chapter_id: chapter.chapter_id,
-                    },
+                        site: chapter.site,  // assuming this is always present
+                        title: chapter.title.unwrap_or_default(),
+                        text: chapter.text.unwrap_or_default(),
+                        chapter_number: chapter.chapter_number.unwrap_or(0),
+                        chapter_id: chapter.chapter_id.unwrap_or(0),
+                    }
+
+          
                 )?
                 .into_py(py))
             })
