@@ -69,3 +69,13 @@ impl PySite {
     }
 }
 
+use pyo3::prelude::*;
+
+#[pymodule]
+fn pybindings(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<PySite>()?;
+    // Add more classes or functions as needed
+    Ok(())
+}
+
+
