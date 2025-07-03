@@ -1,5 +1,5 @@
 use scraper::{Html, Selector};
-use crate::models::{Chapter, Story, Stories};
+use crate::models::{Chapter, Story, Stories, Author};
 
 
 pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
@@ -156,3 +156,25 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
 
 
 
+pub fn parse_author_from_story (html: &str) -> Author {
+    // parse author on story site to get name and id
+    let document = Html::parse_document(html);
+    let author_selector = Selector::parse("div#profile_top > a").unwrap();
+
+    let (author_name, author_id) = document 
+            .select(&author_selector)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|part| {
+                let split: Vec<_> = part.split('/').collect();
+                let slug = split.last()?.to_string();
+                let id = split.get(2)?.parse::<u64>().ok()?;
+                Some((slug, id))
+            })
+            .unwrap_or_else(|| ("unknown-author".into(), 0));
+
+    Author {
+        author_name: Some(author_name),
+        author_id: Some(author_id),
+    }
+}

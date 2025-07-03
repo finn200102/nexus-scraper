@@ -111,9 +111,18 @@ impl Site for FanFictionSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Author> {
-            Err(CoreError::UnsupportedOperation(
-                "fetch_stories not supported for fanfiction".into(),
-            ))
+        let url = format!("https://www.fanfiction.net/s/{}", &story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let author = fanfiction::parse_author_from_story(&html);
+
+        Ok(author)
+
          
         }
+
+
+
+
+
+
 }
