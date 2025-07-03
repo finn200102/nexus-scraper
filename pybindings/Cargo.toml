@@ -7,7 +7,8 @@ edition.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.21", features = ["extension-module"] }
-pyo3-asyncio = { version = "0.21", features = ["tokio-runtime"] }
+pyo3 = { version = "0.20", features = ["extension-module"] }
+pyo3-asyncio = { version = "0.20", features = ["tokio-runtime"] }
 reqwest = { version = "0.11", features = ["rustls-tls"] }
 nexus-core = { path = "../nexus-core" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
