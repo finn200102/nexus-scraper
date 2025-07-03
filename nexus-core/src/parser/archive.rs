@@ -1,5 +1,5 @@
 use scraper::{Html, Selector};
-use crate::models::{Chapter, Story, Stories};
+use crate::models::{Chapter, Story, Stories, Author};
 
 pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
 
@@ -100,4 +100,24 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
 
 }
 
+pub fn parse_author_from_story (html: &str) -> Author {
+    // parse author on story site to get name and id
+    let document = Html::parse_document(html);
+    let author_selector = Selector::parse("h3.heading > a").unwrap();
 
+    let author_name = document 
+            .select(&author_selector)
+            .next()
+            .and_then(|a| a.value().attr("href"))
+            .and_then(|part| {
+                let split: Vec<_> = part.split('/').collect();
+                let slug = split.last()?.to_string();
+                Some(slug)
+            })
+            .unwrap_or_else(|| "unknown-author".into());
+
+    Author {
+        author_name: Some(author_name),
+        ..Default::default()
+    }
+}

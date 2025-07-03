@@ -105,13 +105,14 @@ impl Site for ArchiveSite{
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Author> {
-            Err(CoreError::UnsupportedOperation(
-                "fetch_stories not supported for archive".into(),
-            ))
-         
+        let url = format!("https://archiveofourown.org/works/{}", &story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let author = archive::parse_author_from_story(&html);
+
+        Ok(author)
+
+   
         }
-
-
 
 }
 
