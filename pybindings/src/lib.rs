@@ -5,6 +5,7 @@ use std::sync::Arc;
 use reqwest::Client;
 
 #[pyclass]
+#[derive(Clone)]
 struct PyChapter {
     #[pyo3(get)]
     site: String,
@@ -19,10 +20,28 @@ struct PyChapter {
 }
 
 #[pyclass]
+struct PyStory {
+    #[pyo3(get)]
+    site: String,
+    #[pyo3(get)]
+    story_name: String,
+    #[pyo3(get)]
+    story_id: u64,
+    #[pyo3(get)]
+    author_name: String,
+    #[pyo3(get)]
+    author_id: u64,
+    #[pyo3(get)]
+    chapters: Vec<PyChapter>,
+}
+
+
+#[pyclass]
 struct PySite {
     site: Arc<dyn Site + Send + Sync>,
     client: Client,
 }
+
 #[pymethods]
 impl PySite {
     #[new]
@@ -34,6 +53,52 @@ impl PySite {
             client: Client::new(),
         })
     }
+
+    fn fetch_story_from_url<'py>(
+        &'py self,
+        py: Python<'py>,
+        url: String,
+    ) -> PyResult<&'py PyAny> {
+        let site = self.site.clone();
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let story = site
+                .get_story_data_from_url(&url, &client)
+                .await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+            
+            Python::with_gil(|py| {
+                Ok(Py::new(
+                        py,
+                        PyStory {
+                            site: story.site,
+                            story_name: story.story_name.unwrap_or_default(),
+                            story_id: story.story_id.unwrap_or_default(),
+                            author_name: story.author_name.unwrap_or_default(),
+                            author_id: story.author_id.unwrap_or_default(),
+                            chapters: story.chapters
+                                .into_iter()
+                                .map(|chap| PyChapter {
+                                    site: chap.site,
+                                    title: chap.title.unwrap_or_default(),
+                                    text: chap.text.unwrap_or_default(),
+                                    chapter_number: chap.chapter_number.unwrap_or(0),
+                                    chapter_id: chap.chapter_id.unwrap_or(0),
+                                })
+                                .collect(),
+                        }
+                                )?
+                                .into_py(py))
+            })
+        })
+    }
+
+
+
+
+
+                        
+        
 
     fn fetch_chapter<'py>(
         &'py self,
