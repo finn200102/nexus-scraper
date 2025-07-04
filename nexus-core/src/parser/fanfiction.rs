@@ -1,4 +1,5 @@
 use scraper::{Html, Selector};
+use std::collections::HashSet;
 use crate::models::{Chapter, Story, Stories, Author};
 
 
@@ -27,6 +28,7 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
     let selector = Selector::parse("select#chap_select > option").unwrap();
 
     let mut chapters = Vec::new();
+    let mut seen = HashSet::new();
 
     for chapter_element in document.select(&selector) {
         let chapter_number = chapter_element
@@ -40,6 +42,10 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
             .collect::<String>()
             .trim()
             .to_string();
+
+        if !seen.insert((chapter_number)) {
+            continue;
+        }
 
         chapters.push(Chapter {
             site: "fanfiction".to_string(),
