@@ -95,9 +95,24 @@ impl Site for ArchiveSite{
             url: &str,
             client: &reqwest::Client,
         ) -> Result<Story> {
-            Err(CoreError::UnsupportedOperation(
-                "fetch_stories not supported for archive".into(),
-            ))
+        let split: Vec<_> = url.split('/').collect();
+        let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
+             .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
+
+        let chapters = self.fetch_chapters(story_id, &client).await?;
+        let author_data = self.fetch_author(story_id, &client).await?;
+        let author_name = author_data.author_name; 
+        let author_id = author_data.author_id;     
+
+        Ok(Story{
+            story_id: Some(story_id),
+            chapters: chapters,
+            author_name: author_name,
+            author_id: author_id,
+            site: "spacebattles".to_string(),
+            ..Default::default()
+        })
+
          
         }
     async fn fetch_author(
