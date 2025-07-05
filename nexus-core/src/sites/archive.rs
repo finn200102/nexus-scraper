@@ -109,7 +109,7 @@ impl Site for ArchiveSite{
             chapters: chapters,
             author_name: author_name,
             author_id: author_id,
-            site: "spacebattles".to_string(),
+            site: "archive".to_string(),
             ..Default::default()
         })
 
