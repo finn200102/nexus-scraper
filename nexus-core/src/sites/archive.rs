@@ -37,7 +37,11 @@ impl Site for ArchiveSite{
     ) -> Result<Vec<Chapter>> {
         let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = archive::parse_archive_chapters(&html);
+        let mut chapters = archive::parse_archive_chapters(&html);
+        // add chapter number to chapter_number
+        for (i, chapter) in chapters.iter_mut().enumerate() {
+            chapter.chapter_number = Some((i as u32) + 1)
+        }
 
         Ok(chapters)
         
