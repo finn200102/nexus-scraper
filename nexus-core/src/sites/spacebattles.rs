@@ -46,6 +46,14 @@ impl Site for SpacebattlesSite {
             let chapters = spacebattles::parse_spacebattles_chapters(&html);
             all_chapters.extend(chapters);
         }
+
+
+        // add chapter number to chapter_number
+        for (i, chapter) in all_chapters.iter_mut().enumerate() {
+            chapter.chapter_number = Some((i as u32) + 1)
+        }
+
+
         Ok(all_chapters)
         
     }
