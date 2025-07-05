@@ -70,7 +70,7 @@ pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
 }
 
 
-pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
+pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64, chapter_number: u32) -> Chapter {
 
     let document = Html::parse_document(html);
     let article_selector = format!("article#js-post-{}", chapter_id);
@@ -95,6 +95,7 @@ pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64) -> Chapter {
         title: Some(title),
         text: Some(text),
         chapter_id: Some(chapter_id),
+        chapter_number: Some(chapter_number),
         ..Default::default()
     }
 }

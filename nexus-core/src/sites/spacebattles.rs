@@ -17,12 +17,12 @@ impl Site for SpacebattlesSite {
         &self,
         story_id: u64,
         chapter_id: u64,
-        _chapter_number: u32,
+        chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
         let url = format!("https://forums.spacebattles.com/posts/{}", &chapter_id);
         let html = network::fetch_via_proxy(&url, client).await?;
-        let chapter = spacebattles::parse_spacebattles_chapter(&html, chapter_id);
+        let chapter = spacebattles::parse_spacebattles_chapter(&html, chapter_id, chapter_number);
 
         Ok(chapter)
  
