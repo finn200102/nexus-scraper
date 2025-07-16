@@ -5,6 +5,7 @@ use std::sync::Arc;
 pub mod fanfiction;
 pub mod archive;
 pub mod spacebattles;
+pub mod royalroad;
 #[async_trait::async_trait]
 pub trait Site {
     fn name(&self) -> &'static str;
@@ -72,6 +73,7 @@ pub fn get_site(name: &str) -> Result<Arc<dyn Site + Send + Sync>> {
         "fanfiction" => Ok(Arc::new(fanfiction::FanFictionSite)),
         "archive" => Ok(Arc::new(archive::ArchiveSite)),
         "spacebattles" => Ok(Arc::new(spacebattles::SpacebattlesSite)),
+        "royalroad" => Ok(Arc::new(royalroad::RoyalroadSite)),
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }
