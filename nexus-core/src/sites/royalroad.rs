@@ -38,9 +38,9 @@ impl Site for RoyalroadSite{
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://www.fanfiction.net/s/{}", story_id);
+        let url = format!("https://www.royalroad.com/fiction/{}", story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = fanfiction::parse_fanfiction_chapters(&html);
+        let chapters = royalroad::parse_chapters(&html);
 
         Ok(chapters)
         
@@ -97,7 +97,7 @@ impl Site for RoyalroadSite{
         let split: Vec<_> = url.split('/').collect();
         let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
-        let story_name = split.get(6).ok_or(CoreError::InvalidUrl("Story name not found in URL".to_string()))?.to_string();
+        let story_name = split.get(5).ok_or(CoreError::InvalidUrl("Story name not found in URL".to_string()))?.to_string();
 
         let chapters = self.fetch_chapters(story_id, &client).await?;
         let author_data = self.fetch_author(story_id, &client).await?;
@@ -120,9 +120,9 @@ impl Site for RoyalroadSite{
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Author> {
-        let url = format!("https://www.fanfiction.net/s/{}", &story_id);
+        let url = format!("https://www.royalroad.com/fiction/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
-        let author = fanfiction::parse_author_from_story(&html);
+        let author = royalroad::parse_author_from_story(&html);
 
         Ok(author)
 
