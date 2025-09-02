@@ -45,6 +45,31 @@ impl Site for FanFictionSite {
         
     }
 
+    async fn fetch_chapters_content(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+        ) -> Result<Vec<Chapter>> {
+        let url = format!("https://www.fanfiction.net/s/{}", story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let mut chapters = fanfiction::parse_fanfiction_chapters(&html);
+
+        for chapter in &mut chapters {
+            let chapter_number = chapter.chapter_number;
+            let full_chapter = self.fetch_chapter(story_id, 0, chapter_number.unwrap(), client).await?;
+
+            chapter.text = full_chapter.text;
+            
+        }
+
+        Ok(chapters)
+
+
+
+    }
+
+   
+
 
 
     async fn fetch_author_stories(

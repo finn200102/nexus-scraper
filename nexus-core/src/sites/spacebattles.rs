@@ -59,6 +59,19 @@ impl Site for SpacebattlesSite {
     }
 
 
+    async fn fetch_chapters_content(
+        &self,
+        story_id: u64,
+        client: &reqwest::Client,
+        ) -> Result<Vec<Chapter>> {
+         Err(CoreError::UnsupportedOperation(
+            "fetch_stories not supported for fanfiction".into(),
+        ))
+        
+    }
+
+
+
 
     async fn fetch_author_stories(
         &self,
