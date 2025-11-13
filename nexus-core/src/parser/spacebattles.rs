@@ -149,6 +149,26 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
     stories
 }
 
+/// Parses the description of a fanfiction.net story
+pub fn parse_description(html: &str) -> String {
+    let document = Html::parse_document(html);
+    let description_selector = Selector::parse("div.threadmarkListingHeader-extraInfo
+ > article > div").unwrap();
+
+    let description = document
+            .select(&description_selector)
+            .next()
+            .map(|div| div.text().collect::<Vec<_>>().join(" "))
+            .unwrap_or_else(|| "Description not found".into());
+    description
+    
+
+
+}
+
+
+
+
 
 pub fn parse_author_from_story (html: &str) -> Author {
     // parse author on story site to get name and id
