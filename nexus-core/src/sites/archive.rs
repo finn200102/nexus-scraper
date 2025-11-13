@@ -117,9 +117,15 @@ impl Site for ArchiveSite{
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
 
         let chapters = self.fetch_chapters(story_id, &client).await?;
-        let author_data = self.fetch_author(story_id, &client).await?;
+        // Get html
+        let url = format!("https://archiveofourown.org/works/{}", &story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let author_data = archive::parse_author_from_story(&html);
         let author_name = author_data.author_name; 
-        let author_id = author_data.author_id;     
+        let author_id = author_data.author_id;
+        let description = archive::parse_description(&html);
+
+
 
         Ok(Story{
             story_id: Some(story_id),
@@ -127,6 +133,7 @@ impl Site for ArchiveSite{
             author_name: author_name,
             author_id: author_id,
             site: "archive".to_string(),
+            description: Some(description),
             ..Default::default()
         })
 

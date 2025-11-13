@@ -56,6 +56,22 @@ pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
     chapters
 }
 
+/// Parses the description of a fanfiction.net story
+pub fn parse_description(html: &str) -> String {
+    let document = Html::parse_document(html);
+    let description_selector = Selector::parse("div.summary > blockquote").unwrap();
+
+    let description = document
+            .select(&description_selector)
+            .next()
+            .map(|div| div.text().collect::<Vec<_>>().join(" "))
+            .unwrap_or_else(|| "Description not found".into());
+    description
+}
+
+
+
+
 
 
 pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
