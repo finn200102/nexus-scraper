@@ -45,6 +45,7 @@ pub fn parse_chapters(html: &str) -> Vec<Chapter> {
     match parsed {
         Ok(raw_chapters) => raw_chapters
             .into_iter()
+           
             .map(|rc| Chapter {
                 site: "royalroad".to_string(),
                 title: Some(rc.title),
@@ -56,6 +57,28 @@ pub fn parse_chapters(html: &str) -> Vec<Chapter> {
         Err(_) => vec![],
     }
 }
+
+/// Parses the description of a fanfiction.net story
+pub fn parse_description(html: &str) -> String {
+    let document = Html::parse_document(html);
+
+    // Select the div.hidden-content inside div.description
+    let selector = Selector::parse("div.description div.hidden-content").unwrap();
+
+    if let Some(root) = document.select(&selector).next() {
+        root.text()
+            .map(str::trim)
+            .filter(|t| !t.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ")
+    } else {
+        "Description not found".into()
+    }
+}
+
+
+
+
 
 pub fn parse_author_from_story (html: &str) -> Author {
     // parse author on story site to get name and id
