@@ -12,7 +12,12 @@ impl Site for FanFictionSite {
     fn name(&self) -> &'static str {
         "fanfiction"
     }
-
+    /// Fetches a specific chapter from fanfiction.net
+    ///
+    /// This function contructs the chapter url from the `story_id` and from
+    /// the `chapter_number`, fetches the HTML via proxy and parses it into
+    /// a [`Chapter`] object.
+    ///
     async fn fetch_chapter(
         &self,
         story_id: u64,
