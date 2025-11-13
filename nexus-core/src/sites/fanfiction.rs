@@ -137,9 +137,14 @@ impl Site for FanFictionSite {
         let story_name = split.get(6).ok_or(CoreError::InvalidUrl("Story name not found in URL".to_string()))?.to_string();
 
         let chapters = self.fetch_chapters(story_id, &client).await?;
-        let author_data = self.fetch_author(story_id, &client).await?;
+       // Get html
+        let url = format!("https://www.fanfiction.net/s/{}", &story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let author_data = fanfiction::parse_author_from_story(&html);
         let author_name = author_data.author_name; 
-        let author_id = author_data.author_id;     
+        let author_id = author_data.author_id;
+        let description = fanfiction::parse_description(&html);
+
 
         Ok(Story{
             story_name: Some(story_name),
@@ -148,8 +153,11 @@ impl Site for FanFictionSite {
             author_name: author_name,
             author_id: author_id,
             site: "fanfiction".to_string(),
+            description: Some(description),
         })
     }
+
+
 
 
     async fn fetch_author(

@@ -23,6 +23,7 @@ pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
 
 
 
+
 pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("select#chap_select > option").unwrap();
@@ -160,7 +161,21 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
 
 }
 
+/// Parses the description of a fanfiction.net story
+pub fn parse_description(html: &str) -> String {
+    let document = Html::parse_document(html);
+    let description_selector = Selector::parse("div#profile_top > div").unwrap();
 
+    let description = document
+            .select(&description_selector)
+            .next()
+            .map(|div| div.text().collect::<Vec<_>>().join(" "))
+            .unwrap_or_else(|| "Description not found".into());
+    description
+    
+
+
+}
 
 pub fn parse_author_from_story (html: &str) -> Author {
     // parse author on story site to get name and id
@@ -184,3 +199,4 @@ pub fn parse_author_from_story (html: &str) -> Author {
         author_id: Some(author_id),
     }
 }
+

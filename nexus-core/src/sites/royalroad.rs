@@ -124,6 +124,8 @@ impl Site for RoyalroadSite{
             author_name: author_name,
             author_id: author_id,
             site: "royalroad".to_string(),
+            ..Default::default()
+
         })
     }
 

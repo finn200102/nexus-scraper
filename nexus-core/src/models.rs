@@ -15,6 +15,7 @@ pub struct Story {
     pub story_id: Option<u64>,
     pub story_name: Option<String>,
     pub chapters: Vec<Chapter>,
+    pub description: Option<String>,
 
 }
 

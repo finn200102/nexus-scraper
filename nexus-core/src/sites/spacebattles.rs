@@ -149,6 +149,8 @@ impl Site for SpacebattlesSite {
             author_name: author_name,
             author_id: author_id,
             site: "spacebattles".to_string(),
+            ..Default::default()
+
         })
 
      }
