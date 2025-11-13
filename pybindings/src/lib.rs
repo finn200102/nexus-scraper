@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo4::prelude::*;
 use nexus_core::sites::{get_site, Site as Site};
 use pyo3_asyncio::tokio::future_into_py;
 use std::sync::Arc;
@@ -33,6 +33,8 @@ struct PyStory {
     author_id: u64,
     #[pyo3(get)]
     chapters: Vec<PyChapter>,
+    #[pyo3(get)]
+    description: String,
 }
 
 
@@ -76,6 +78,7 @@ impl PySite {
                             story_id: story.story_id.unwrap_or_default(),
                             author_name: story.author_name.unwrap_or_default(),
                             author_id: story.author_id.unwrap_or_default(),
+                            description: story.description.unwrap_or_default(),
                             chapters: story.chapters
                                 .into_iter()
                                 .map(|chap| PyChapter {
