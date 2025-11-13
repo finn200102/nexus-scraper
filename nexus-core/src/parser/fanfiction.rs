@@ -177,6 +177,23 @@ pub fn parse_description(html: &str) -> String {
 
 }
 
+/// Parses the story_name of a fanfiction.net story
+pub fn parse_story_name(html: &str) -> String {
+    let document = Html::parse_document(html);
+    let title_selector = Selector::parse("div#profile_top > b").unwrap();
+
+    let title = document
+            .select(&title_selector)
+            .next()
+            .map(|div| div.text().collect::<Vec<_>>().join(" "))
+            .unwrap_or_else(|| "story_name not found".into());
+    title 
+
+
+}
+
+
+
 pub fn parse_author_from_story (html: &str) -> Author {
     // parse author on story site to get name and id
     let document = Html::parse_document(html);
