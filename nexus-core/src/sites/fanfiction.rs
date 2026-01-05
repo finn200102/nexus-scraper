@@ -155,6 +155,8 @@ impl Site for FanFictionSite {
             author_id: author_id,
             site: "fanfiction".to_string(),
             description: Some(description),
+            ..Default::default()
+
         })
     }
 
