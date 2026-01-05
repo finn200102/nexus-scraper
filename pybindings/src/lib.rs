@@ -35,6 +35,8 @@ struct PyStory {
     chapters: Vec<PyChapter>,
     #[pyo3(get)]
     description: String,
+    #[pyo3(get)]
+    img_url: String,
 }
 
 
@@ -79,6 +81,7 @@ impl PySite {
                             author_name: story.author_name.unwrap_or_default(),
                             author_id: story.author_id.unwrap_or_default(),
                             description: story.description.unwrap_or_default(),
+                            img_url: story.img_url.unwrap_or_default(),
                             chapters: story.chapters
                                 .into_iter()
                                 .map(|chap| PyChapter {
