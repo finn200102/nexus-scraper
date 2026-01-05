@@ -60,6 +60,23 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
 }
 
 
+/// Parses the img url of the cover img
+pub fn parse_cover(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+
+    // Select the img.thumbnail inside div.cover-art-container 
+    let selector = Selector::parse("div#profile_top img.cimage").unwrap();
+
+    document
+        .select(&selector)
+        .next()
+        .and_then(|img| img.value().attr("src"))
+        .map(|url| format!("https://www.fanfiction.net{}", url))
+}
+
+
+
+
 
 pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 
