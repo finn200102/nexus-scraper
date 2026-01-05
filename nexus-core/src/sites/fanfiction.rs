@@ -144,6 +144,8 @@ impl Site for FanFictionSite {
         let author_id = author_data.author_id;
         let description = fanfiction::parse_description(&html);
         let story_name = fanfiction::parse_story_name(&html);
+
+        let img_url = fanfiction::parse_cover(&html);
         
 
 
@@ -155,6 +157,9 @@ impl Site for FanFictionSite {
             author_id: author_id,
             site: "fanfiction".to_string(),
             description: Some(description),
+            img_url: img_url,
+            ..Default::default()
+
         })
     }
 

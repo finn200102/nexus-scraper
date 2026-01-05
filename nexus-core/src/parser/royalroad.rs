@@ -58,7 +58,7 @@ pub fn parse_chapters(html: &str) -> Vec<Chapter> {
     }
 }
 
-/// Parses the description of a fanfiction.net story
+/// Parses the description of a royalroad story
 pub fn parse_description(html: &str) -> String {
     let document = Html::parse_document(html);
 
@@ -74,6 +74,20 @@ pub fn parse_description(html: &str) -> String {
     } else {
         "Description not found".into()
     }
+}
+
+/// Parses the img url of the cover img
+pub fn parse_cover(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+
+    // Select the img.thumbnail inside div.cover-art-container 
+    let selector = Selector::parse("div.cover-art-container img.thumbnail").unwrap();
+
+    document
+        .select(&selector)
+        .next()
+        .and_then(|img| img.value().attr("src"))
+        .map(String::from)
 }
 
 

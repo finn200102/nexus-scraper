@@ -121,6 +121,8 @@ impl Site for RoyalroadSite{
         let author_id = author_data.author_id;
         let description = royalroad::parse_description(&html);
 
+        let img_url = royalroad::parse_cover(&html);
+
 
 
         Ok(Story{
@@ -131,6 +133,7 @@ impl Site for RoyalroadSite{
             author_id: author_id,
             site: "royalroad".to_string(),
             description: Some(description),
+            img_url: img_url,
             ..Default::default()
 
         })
