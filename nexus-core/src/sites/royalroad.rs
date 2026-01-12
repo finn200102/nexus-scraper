@@ -123,6 +123,8 @@ impl Site for RoyalroadSite{
 
         let img_url = royalroad::parse_cover(&html);
 
+        let tags = royalroad::parse_tags(&html);
+
 
 
         Ok(Story{
@@ -134,6 +136,7 @@ impl Site for RoyalroadSite{
             site: "royalroad".to_string(),
             description: Some(description),
             img_url: img_url,
+            tags: tags,
             ..Default::default()
 
         })
