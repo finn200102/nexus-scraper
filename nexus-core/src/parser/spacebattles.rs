@@ -166,6 +166,31 @@ pub fn parse_description(html: &str) -> String {
 
 }
 
+/// Parses the tags of a spacebattles story
+pub fn parse_tags(html: &str) -> Vec<String> {
+    let document = Html::parse_document(html);
+
+    // Select the a inside span.js-tagList
+    let selector = Selector::parse("span.js-tagList a").unwrap();
+
+    let mut tags = Vec::new();
+
+    for tag in document.select(&selector) {
+        if let Some(tag_name) = tag
+            .value()
+            .attr("href")
+            .and_then(|href| href.split('/').last())
+            .and_then(|s| s.split('=').last())
+        {
+            tags.push(tag_name.to_string());
+        }
+    }
+
+    tags
+}
+
+
+
 
 
 
