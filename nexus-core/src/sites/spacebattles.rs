@@ -146,6 +146,8 @@ impl Site for SpacebattlesSite {
         let author_id = author_data.author_id;
         let description = spacebattles::parse_description(&html);
 
+        let tags = spacebattles::parse_tags(&html);
+
 
 
 
@@ -157,6 +159,7 @@ impl Site for SpacebattlesSite {
             author_id: author_id,
             site: "spacebattles".to_string(),
             description: Some(description),
+            tags: tags,
             ..Default::default()
 
         })
