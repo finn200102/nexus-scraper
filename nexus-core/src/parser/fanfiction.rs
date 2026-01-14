@@ -60,6 +60,32 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
 }
 
 
+/// Parses the tags of a fanfiction story
+pub fn parse_tags(html: &str) -> Vec<String> {
+    let document = Html::parse_document(html);
+
+    // Select the a inside span.tags
+    let selector = Selector::parse("span.tags a").unwrap();
+
+    let mut tags = Vec::new();
+
+    for tag in document.select(&selector) {
+        if let Some(tag_name) = tag
+            .value()
+            .attr("href")
+            .and_then(|href| href.split('/').last())
+            .and_then(|s| s.split('=').last())
+        {
+            tags.push(tag_name.to_string());
+        }
+    }
+
+    tags
+}
+
+
+
+
 /// Parses the img url of the cover img
 pub fn parse_cover(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
