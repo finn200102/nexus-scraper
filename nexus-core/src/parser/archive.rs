@@ -69,6 +69,31 @@ pub fn parse_description(html: &str) -> String {
     description
 }
 
+/// Parses the tags of an archive story
+pub fn parse_tags(html: &str) -> Vec<String> {
+    let document = Html::parse_document(html);
+
+    // Select the a inside li inside ul in dd.freeform, .tags
+    let selector = Selector::parse("dd.freeform ul li a, dd.tags ul li a").unwrap();
+
+
+    let mut tags = Vec::new();
+
+    for tag in document.select(&selector) {
+        if let Some(tag_name) = tag
+            .value()
+            .attr("href")
+            .and_then(|href| href.split('/').nth(2))
+        {
+            tags.push(tag_name.to_string());
+        }
+    }
+
+    tags
+}
+
+
+
 
 
 

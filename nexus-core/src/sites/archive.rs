@@ -125,6 +125,8 @@ impl Site for ArchiveSite{
         let author_id = author_data.author_id;
         let description = archive::parse_description(&html);
 
+        let tags = archive::parse_tags(&html);
+
 
 
         Ok(Story{
@@ -134,6 +136,7 @@ impl Site for ArchiveSite{
             author_id: author_id,
             site: "archive".to_string(),
             description: Some(description),
+            tags: tags,
             ..Default::default()
         })
 
