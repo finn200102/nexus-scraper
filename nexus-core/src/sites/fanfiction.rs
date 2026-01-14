@@ -146,6 +146,7 @@ impl Site for FanFictionSite {
         let story_name = fanfiction::parse_story_name(&html);
 
         let img_url = fanfiction::parse_cover(&html);
+        let genre = fanfiction::parse_genre(&html);
         
 
 
@@ -158,6 +159,7 @@ impl Site for FanFictionSite {
             site: "fanfiction".to_string(),
             description: Some(description),
             img_url: img_url,
+            genre: genre,
             ..Default::default()
 
         })

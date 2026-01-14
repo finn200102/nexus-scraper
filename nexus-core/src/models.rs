@@ -18,6 +18,7 @@ pub struct Story {
     pub description: Option<String>,
     pub img_url: Option<String>,
     pub tags: Vec<String>,
+    pub genre: Vec<String>,
 
 }
 

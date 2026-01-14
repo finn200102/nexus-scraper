@@ -84,6 +84,32 @@ pub fn parse_tags(html: &str) -> Vec<String> {
 }
 
 
+pub fn parse_genre(html: &str) -> Vec<String> {
+    let document = Html::parse_document(html);
+
+    // "- language - genre1/genre2/genre3 - character1, character2 - Chapters: number - Words: number - Reviews:"
+    let selector = match Selector::parse(r#"a[href*="fictionratings.com"]"#) {
+        Ok(s) => s,
+        Err(_) => return Vec::new(),
+    };
+
+    document
+        .select(&selector)
+        .next()
+        .and_then(|a| a.next_sibling())
+        .and_then(|n| n.value().as_text())
+        .and_then(|t| t.trim().split(" - ").find(|p| p.contains('/')))
+        .map(|g| {
+            g.split('/')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+
+
 
 
 /// Parses the img url of the cover img
