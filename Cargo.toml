@@ -2,7 +2,8 @@
 members = [
     "nexus-core",
     "nexus-cli",
-    "pybindings"
+    "pybindings",
+    "nexus-tui"
 ]
 resolver = "2"
 

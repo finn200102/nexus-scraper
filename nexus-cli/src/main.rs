@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use nexus_core::error::Result;
+use nexus_core::resolver;
 use nexus_core::sites::get_site;
 
 #[derive(Parser)]
@@ -63,7 +64,7 @@ enum Commands {
 
     GetStoryDataFromUrl {
         #[arg(long)]
-        site: String,
+        site: Option<String>,
         #[arg(long)]
         url: String,
     },
@@ -196,18 +197,16 @@ async fn handle_fetch_stories_by_series(
 
 
 async fn handle_get_story_data_from_url(
-    site: String,
+    site: Option<String>,
     url: String,
     client: &reqwest::Client,
 ) -> Result<()> {
-    let site = get_site(&site)?;
-    let story = site.get_story_data_from_url(&url, &client).await?;
-    let filename = format!("story.json");
+    let story = resolver::fetch_story_data_from_url(&url, site.as_deref(), client).await?;
+    let filename = "story.json";
     let json = serde_json::to_string_pretty(&story)?;
-    tokio::fs::write(&filename, json).await?;
+    tokio::fs::write(filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
 
 
