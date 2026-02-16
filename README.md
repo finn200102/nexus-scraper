@@ -12,6 +12,21 @@ cargo run -p nexus-cli -- --help
 cargo run -p nexus-cli -- <SUBCOMMAND> [OPTIONS]
 ```
 
+- resolve story data from URL (auto-detects site)
+```sh
+cargo run -p nexus-cli -- get-story-data-from-url --url "https://www.fanfiction.net/s/14540056/1/Paradise-Found"
+```
+
+- optional explicit site override
+```sh
+cargo run -p nexus-cli -- get-story-data-from-url --site fanfiction --url "https://www.fanfiction.net/s/14540056/1/Paradise-Found"
+```
+
+- launch TUI scraper/reader
+```sh
+cargo run -p nexus-tui
+```
+
 - fetch a single chapter from fanfiction.net
 ```sh
 cargo run -p nexus-cli -- fetch-chapter   --site fanfiction   --story-id ID<int64> --chapter-number Number<int32>
