@@ -17,7 +17,8 @@ struct ProxyResponse {
 }
 
 pub async fn fetch_via_proxy(url: &str, client: &Client) -> Result<String> {
-    let proxy_url = "http://localhost:8191/v1";
+    let proxy_url = std::env::var("FLARESOLVERR_URL")
+        .unwrap_or_else(|_| "http://localhost:8191/v1".to_string());
     let payload = ProxyRequest {
         cmd: "request.get".to_string(),
         url: url.to_string(),
