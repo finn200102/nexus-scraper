@@ -1,5 +1,5 @@
+use crate::models::{Author, Chapter, Stories, Story};
 use scraper::{Html, Selector};
-use crate::models::{Chapter, Story, Stories, Author};
 
 pub fn parse_spacebattles_pages(html: &str) -> u32 {
     let document = Html::parse_document(html);
@@ -25,7 +25,6 @@ pub fn parse_spacebattles_pages(html: &str) -> u32 {
 
     last_page
 }
-
 
 pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
     let document = Html::parse_document(html);
@@ -69,9 +68,7 @@ pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
     chapters
 }
 
-
 pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64, chapter_number: u32) -> Chapter {
-
     let document = Html::parse_document(html);
     let article_selector = format!("article#js-post-{}", chapter_id);
     let article = Selector::parse(&article_selector).unwrap();
@@ -114,7 +111,7 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
             .select(&title_selector)
             .next()
             .and_then(|a| a.value().attr("href"))
-            .and_then(|href| href.split('/').nth(2)) 
+            .and_then(|href| href.split('/').nth(2))
             .and_then(|part| {
                 let mut split = part.split('.');
                 let slug = split.next()?.to_string();
@@ -128,7 +125,7 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
             .select(&author_selector)
             .next()
             .and_then(|a| a.value().attr("href"))
-            .and_then(|href| href.split('/').nth(2)) 
+            .and_then(|href| href.split('/').nth(2))
             .and_then(|part| {
                 let mut split = part.split('.');
                 let slug = split.next()?.to_string();
@@ -152,18 +149,18 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
 /// Parses the description of a fanfiction.net story
 pub fn parse_description(html: &str) -> String {
     let document = Html::parse_document(html);
-    let description_selector = Selector::parse("div.threadmarkListingHeader-extraInfo
- > article > div").unwrap();
+    let description_selector = Selector::parse(
+        "div.threadmarkListingHeader-extraInfo
+ > article > div",
+    )
+    .unwrap();
 
     let description = document
-            .select(&description_selector)
-            .next()
-            .map(|div| div.text().collect::<Vec<_>>().join(" "))
-            .unwrap_or_else(|| "Description not found".into());
+        .select(&description_selector)
+        .next()
+        .map(|div| div.text().collect::<Vec<_>>().join(" "))
+        .unwrap_or_else(|| "Description not found".into());
     description
-    
-
-
 }
 
 /// Parses the tags of a spacebattles story
@@ -189,29 +186,23 @@ pub fn parse_tags(html: &str) -> Vec<String> {
     tags
 }
 
-
-
-
-
-
-
-pub fn parse_author_from_story (html: &str) -> Author {
+pub fn parse_author_from_story(html: &str) -> Author {
     // parse author on story site to get name and id
     let document = Html::parse_document(html);
     let author_selector = Selector::parse("a.username").unwrap();
 
-    let (author_name, author_id) = document 
-            .select(&author_selector)
-            .next()
-            .and_then(|a| a.value().attr("href"))
-            .and_then(|href| href.split('/').nth(2)) 
-            .and_then(|part| {
-                let mut split = part.split('.');
-                let slug = split.next()?.to_string();
-                let id = split.next()?.parse::<u64>().ok()?;
-                Some((slug, id))
-            })
-            .unwrap_or_else(|| ("unknown-author".into(), 0));
+    let (author_name, author_id) = document
+        .select(&author_selector)
+        .next()
+        .and_then(|a| a.value().attr("href"))
+        .and_then(|href| href.split('/').nth(2))
+        .and_then(|part| {
+            let mut split = part.split('.');
+            let slug = split.next()?.to_string();
+            let id = split.next()?.parse::<u64>().ok()?;
+            Some((slug, id))
+        })
+        .unwrap_or_else(|| ("unknown-author".into(), 0));
 
     Author {
         author_name: Some(author_name),
@@ -219,3 +210,28 @@ pub fn parse_author_from_story (html: &str) -> Author {
     }
 }
 
+pub fn parse_created_date(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("time.u-dt").ok()?;
+
+    let element = document.select(&selector).next()?;
+    element.value().attr("data-date-string").map(String::from)
+}
+
+pub fn parse_status(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dl.pairs--rows").ok()?;
+
+    for element in document.select(&selector) {
+        let dt_text = element.select(&Selector::parse("dt").ok()?).next();
+        if let Some(dt) = dt_text {
+            if dt.text().collect::<String>() == "Status" {
+                return element
+                    .select(&Selector::parse("dd").ok()?)
+                    .next()
+                    .map(|dd| dd.text().collect::<String>());
+            }
+        }
+    }
+    None
+}

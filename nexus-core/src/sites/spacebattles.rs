@@ -131,7 +131,7 @@ impl Site for SpacebattlesSite {
         let (story_name, story_id) = { 
         let trimmed_url = url.trim_end_matches('/').to_string();
         let last_segment = trimmed_url.rsplit('/').next().unwrap_or_default();
-        let (name_part, id_part) = last_segment.rsplit_once('.').unwrap_or((last_segment, ""));
+        let (name_part, id_part) = last_segment.rsplit_once('.').unwrap_or(("", last_segment));
         (name_part.to_string(), id_part.to_string())
     };
         let story_id: u64 = story_id.parse()
@@ -146,13 +146,15 @@ impl Site for SpacebattlesSite {
         let author_id = author_data.author_id;
         let description = spacebattles::parse_description(&html);
 
-        let tags = spacebattles::parse_tags(&html);
+         let tags = spacebattles::parse_tags(&html);
+         let publish_date = spacebattles::parse_created_date(&html);
+         let status = spacebattles::parse_status(&html);
 
 
 
 
         Ok(Story{
-            story_name: Some(story_name),
+            story_name: if story_name.is_empty() { None } else { Some(story_name) },
             story_id: Some(story_id),
             chapters: chapters,
             author_name: author_name,
@@ -160,6 +162,9 @@ impl Site for SpacebattlesSite {
             site: "spacebattles".to_string(),
             description: Some(description),
             tags: tags,
+            genre: vec![],
+            publish_date: publish_date,
+            status: status,
             ..Default::default()
 
         })
