@@ -110,7 +110,7 @@ impl Site for RoyalroadSite{
         let split: Vec<_> = url.split('/').collect();
         let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
-        let story_name = split.get(5).ok_or(CoreError::InvalidUrl("Story name not found in URL".to_string()))?.to_string();
+        let story_name = split.get(5).map(|s| s.to_string());
 
         let chapters = self.fetch_chapters(story_id, &client).await?;
        // Get html
@@ -135,7 +135,7 @@ impl Site for RoyalroadSite{
 
 
         Ok(Story{
-            story_name: Some(story_name),
+            story_name: story_name,
             story_id: Some(story_id),
             chapters: chapters,
             author_name: author_name,
