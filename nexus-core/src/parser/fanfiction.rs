@@ -1,14 +1,13 @@
+use crate::models::{Author, Chapter, Stories, Story};
 use scraper::{Html, Selector};
 use std::collections::HashSet;
-use crate::models::{Chapter, Story, Stories, Author};
-
 
 pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
-
     let document = Html::parse_document(html);
-    
+
     let selector = Selector::parse("div#storytext").unwrap();
-    let text = document.select(&selector)
+    let text = document
+        .select(&selector)
         .next()
         .map(|div| div.text().collect::<Vec<_>>().join(" "))
         .unwrap_or_else(|| "Chapter not found".into());
@@ -20,9 +19,6 @@ pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
         ..Default::default()
     }
 }
-
-
-
 
 pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
     let document = Html::parse_document(html);
@@ -50,7 +46,7 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
 
         chapters.push(Chapter {
             site: "fanfiction".to_string(),
-            title: Some(title), 
+            title: Some(title),
             chapter_number: Some(chapter_number),
             ..Default::default()
         });
@@ -58,7 +54,6 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
 
     chapters
 }
-
 
 /// Parses the tags of a fanfiction story
 pub fn parse_tags(html: &str) -> Vec<String> {
@@ -82,7 +77,6 @@ pub fn parse_tags(html: &str) -> Vec<String> {
 
     tags
 }
-
 
 pub fn parse_genre(html: &str) -> Vec<String> {
     let document = Html::parse_document(html);
@@ -108,15 +102,11 @@ pub fn parse_genre(html: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
-
-
-
-
 /// Parses the img url of the cover img
 pub fn parse_cover(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
 
-    // Select the img.thumbnail inside div.cover-art-container 
+    // Select the img.thumbnail inside div.cover-art-container
     let selector = Selector::parse("div#profile_top img.cimage").unwrap();
 
     document
@@ -126,12 +116,7 @@ pub fn parse_cover(html: &str) -> Option<String> {
         .map(|url| format!("https://www.fanfiction.net{}", url))
 }
 
-
-
-
-
 pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
-
     let document = Html::parse_document(html);
 
     let container_selector = Selector::parse("div#st_inside").unwrap();
@@ -141,7 +126,6 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
     let mut stories = Vec::new();
 
     if let Some(container) = document.select(&container_selector).next() {
-
         for story_element in container.select(&story_selector) {
             // Extract story title from element
             let title_selector = Selector::parse("a.stitle").unwrap();
@@ -162,7 +146,6 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
                 .and_then(|id_str| id_str.parse::<u64>().ok())
                 .unwrap_or(0);
 
-
             stories.push(Story {
                 site: "fanfiction".to_string(),
                 story_name: Some(title),
@@ -173,18 +156,15 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
         }
     }
 
-    Stories {stories}
-
+    Stories { stories }
 }
 
 pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
-
     let document = Html::parse_document(html);
 
     let selector = Selector::parse("div.z-list.zhover.zpointer").unwrap();
 
     let mut stories = Vec::new();
-
 
     for story_element in document.select(&selector) {
         // Extract story title from element
@@ -215,8 +195,6 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             .and_then(|id_str| id_str.parse::<u64>().ok())
             .unwrap_or(0);
 
-
-
         stories.push(Story {
             site: "fanfiction".to_string(),
             story_name: Some(title),
@@ -224,10 +202,9 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             story_id: Some(story_id),
             ..Default::default()
         });
-}
+    }
 
-    Stories {stories}
-
+    Stories { stories }
 }
 
 /// Parses the description of a fanfiction.net story
@@ -236,14 +213,11 @@ pub fn parse_description(html: &str) -> String {
     let description_selector = Selector::parse("div#profile_top > div").unwrap();
 
     let description = document
-            .select(&description_selector)
-            .next()
-            .map(|div| div.text().collect::<Vec<_>>().join(" "))
-            .unwrap_or_else(|| "Description not found".into());
+        .select(&description_selector)
+        .next()
+        .map(|div| div.text().collect::<Vec<_>>().join(" "))
+        .unwrap_or_else(|| "Description not found".into());
     description
-    
-
-
 }
 
 /// Parses the story_name of a fanfiction.net story
@@ -252,33 +226,29 @@ pub fn parse_story_name(html: &str) -> String {
     let title_selector = Selector::parse("div#profile_top > b").unwrap();
 
     let title = document
-            .select(&title_selector)
-            .next()
-            .map(|div| div.text().collect::<Vec<_>>().join(" "))
-            .unwrap_or_else(|| "story_name not found".into());
-    title 
-
-
+        .select(&title_selector)
+        .next()
+        .map(|div| div.text().collect::<Vec<_>>().join(" "))
+        .unwrap_or_else(|| "story_name not found".into());
+    title
 }
 
-
-
-pub fn parse_author_from_story (html: &str) -> Author {
+pub fn parse_author_from_story(html: &str) -> Author {
     // parse author on story site to get name and id
     let document = Html::parse_document(html);
     let author_selector = Selector::parse("div#profile_top > a").unwrap();
 
-    let (author_name, author_id) = document 
-            .select(&author_selector)
-            .next()
-            .and_then(|a| a.value().attr("href"))
-            .and_then(|part| {
-                let split: Vec<_> = part.split('/').collect();
-                let slug = split.last()?.to_string();
-                let id = split.get(2)?.parse::<u64>().ok()?;
-                Some((slug, id))
-            })
-            .unwrap_or_else(|| ("unknown-author".into(), 0));
+    let (author_name, author_id) = document
+        .select(&author_selector)
+        .next()
+        .and_then(|a| a.value().attr("href"))
+        .and_then(|part| {
+            let split: Vec<_> = part.split('/').collect();
+            let slug = split.last()?.to_string();
+            let id = split.get(2)?.parse::<u64>().ok()?;
+            Some((slug, id))
+        })
+        .unwrap_or_else(|| ("unknown-author".into(), 0));
 
     Author {
         author_name: Some(author_name),
@@ -286,3 +256,144 @@ pub fn parse_author_from_story (html: &str) -> Author {
     }
 }
 
+pub fn parse_word_count(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Words:")
+        .nth(1)?
+        .split('-')
+        .next()?
+        .trim()
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_reviews(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Reviews:")
+        .nth(1)?
+        .split_whitespace()
+        .next()?
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_favorites(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Favs:")
+        .nth(1)?
+        .split_whitespace()
+        .next()?
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_follows(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Follows:")
+        .nth(1)?
+        .split_whitespace()
+        .next()?
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_publish_date(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Published:")
+        .nth(1)?
+        .split('-')
+        .next()?
+        .trim()
+        .to_string()
+        .into()
+}
+
+pub fn parse_updated_date(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Updated:")
+        .nth(1)?
+        .split("Published:")
+        .next()?
+        .trim()
+        .trim_end_matches('-')
+        .trim()
+        .to_string()
+        .into()
+}
+
+pub fn parse_status(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    let span_text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    span_text
+        .split("Status:")
+        .nth(1)?
+        .split_whitespace()
+        .next()?
+        .to_string()
+        .into()
+}

@@ -19,13 +19,18 @@ pub struct Story {
     pub img_url: Option<String>,
     pub tags: Vec<String>,
     pub genre: Vec<String>,
-
+    pub word_count: Option<u64>,
+    pub reviews: Option<u64>,
+    pub favorites: Option<u64>,
+    pub follows: Option<u64>,
+    pub publish_date: Option<String>,
+    pub updated_date: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Serialize, Default)]
 pub struct Stories {
     pub stories: Vec<Story>,
-
 }
 
 #[derive(Debug, Serialize, Default)]

@@ -37,6 +37,20 @@ struct PyStory {
     description: String,
     #[pyo3(get)]
     img_url: String,
+    #[pyo3(get)]
+    word_count: u64,
+    #[pyo3(get)]
+    reviews: u64,
+    #[pyo3(get)]
+    favorites: u64,
+    #[pyo3(get)]
+    follows: u64,
+    #[pyo3(get)]
+    publish_date: String,
+    #[pyo3(get)]
+    updated_date: String,
+    #[pyo3(get)]
+    status: String,
 }
 
 
@@ -82,6 +96,13 @@ impl PySite {
                             author_id: story.author_id.unwrap_or_default(),
                             description: story.description.unwrap_or_default(),
                             img_url: story.img_url.unwrap_or_default(),
+                            word_count: story.word_count.unwrap_or_default(),
+                            reviews: story.reviews.unwrap_or_default(),
+                            favorites: story.favorites.unwrap_or_default(),
+                            follows: story.follows.unwrap_or_default(),
+                            publish_date: story.publish_date.unwrap_or_default(),
+                            updated_date: story.updated_date.unwrap_or_default(),
+                            status: story.status.unwrap_or_default(),
                             chapters: story.chapters
                                 .into_iter()
                                 .map(|chap| PyChapter {

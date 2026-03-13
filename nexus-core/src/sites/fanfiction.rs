@@ -147,6 +147,14 @@ impl Site for FanFictionSite {
 
         let img_url = fanfiction::parse_cover(&html);
         let genre = fanfiction::parse_genre(&html);
+        let tags = fanfiction::parse_tags(&html);
+        let word_count = fanfiction::parse_word_count(&html);
+        let reviews = fanfiction::parse_reviews(&html);
+        let favorites = fanfiction::parse_favorites(&html);
+        let follows = fanfiction::parse_follows(&html);
+        let publish_date = fanfiction::parse_publish_date(&html);
+        let updated_date = fanfiction::parse_updated_date(&html);
+        let status = fanfiction::parse_status(&html);
         
 
 
@@ -159,8 +167,15 @@ impl Site for FanFictionSite {
             site: "fanfiction".to_string(),
             description: Some(description),
             img_url: img_url,
+            tags: tags,
             genre: genre,
-            ..Default::default()
+            word_count: word_count,
+            reviews: reviews,
+            favorites: favorites,
+            follows: follows,
+            publish_date: publish_date,
+            updated_date: updated_date,
+            status: status,
 
         })
     }
