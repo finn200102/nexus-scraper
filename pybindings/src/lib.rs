@@ -51,6 +51,10 @@ struct PyStory {
     updated_date: String,
     #[pyo3(get)]
     status: String,
+    #[pyo3(get)]
+    views: u64,
+    #[pyo3(get)]
+    rating: f64,
 }
 
 
@@ -103,6 +107,8 @@ impl PySite {
                             publish_date: story.publish_date.unwrap_or_default(),
                             updated_date: story.updated_date.unwrap_or_default(),
                             status: story.status.unwrap_or_default(),
+                            views: story.views.unwrap_or_default(),
+                            rating: story.rating.unwrap_or_default(),
                             chapters: story.chapters
                                 .into_iter()
                                 .map(|chap| PyChapter {

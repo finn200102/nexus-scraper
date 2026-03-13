@@ -124,6 +124,13 @@ impl Site for RoyalroadSite{
         let img_url = royalroad::parse_cover(&html);
 
         let tags = royalroad::parse_tags(&html);
+        
+        let views = royalroad::parse_total_views(&html);
+        let followers = royalroad::parse_followers(&html);
+        let favorites = royalroad::parse_favorites(&html);
+        let reviews = royalroad::parse_ratings(&html);
+        let word_count = royalroad::parse_word_count_from_pages(&html);
+        let rating = royalroad::parse_overall_score(&html);
 
 
 
@@ -137,7 +144,16 @@ impl Site for RoyalroadSite{
             description: Some(description),
             img_url: img_url,
             tags: tags,
-            ..Default::default()
+            genre: vec![],
+            views: views,
+            follows: followers,
+            favorites: favorites,
+            reviews: reviews,
+            word_count: word_count,
+            rating: rating,
+            publish_date: None,
+            updated_date: None,
+            status: None,
 
         })
     }

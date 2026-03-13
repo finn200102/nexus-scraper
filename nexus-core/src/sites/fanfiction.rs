@@ -176,6 +176,8 @@ impl Site for FanFictionSite {
             publish_date: publish_date,
             updated_date: updated_date,
             status: status,
+            views: None,
+            rating: None,
 
         })
     }

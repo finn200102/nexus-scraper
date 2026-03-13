@@ -26,6 +26,8 @@ pub struct Story {
     pub publish_date: Option<String>,
     pub updated_date: Option<String>,
     pub status: Option<String>,
+    pub views: Option<u64>,
+    pub rating: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Default)]
