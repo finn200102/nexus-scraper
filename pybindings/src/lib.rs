@@ -20,6 +20,7 @@ struct PyChapter {
 }
 
 #[pyclass]
+#[derive(Clone)]
 struct PyStory {
     #[pyo3(get)]
     site: String,
@@ -55,6 +56,14 @@ struct PyStory {
     views: u64,
     #[pyo3(get)]
     rating: f64,
+    #[pyo3(get)]
+    chapter_count: u64,
+}
+
+#[pyclass]
+struct PyStories {
+    #[pyo3(get)]
+    stories: Vec<PyStory>,
 }
 
 
@@ -109,6 +118,7 @@ impl PySite {
                             status: story.status.unwrap_or_default(),
                             views: story.views.unwrap_or_default(),
                             rating: story.rating.unwrap_or_default(),
+                            chapter_count: story.chapter_count.unwrap_or_default(),
                             chapters: story.chapters
                                 .into_iter()
                                 .map(|chap| PyChapter {
@@ -165,6 +175,68 @@ impl PySite {
             })
         })
     }
+
+    fn fetch_stories_by_series<'py>(
+        &'py self,
+        py: Python<'py>,
+        medium_name: String,
+        series_name: String,
+        sortby_id: u32,
+        rating_id: u32,
+        word_count: u32,
+        time_range: u32,
+        num_pages: u32,
+    ) -> PyResult<&'py PyAny> {
+        let site = self.site.clone();
+        let client = self.client.clone();
+        future_into_py(py, async move {
+            let stories = site
+                .fetch_stories_by_series(
+                    medium_name,
+                    &series_name,
+                    sortby_id,
+                    rating_id,
+                    word_count,
+                    time_range,
+                    num_pages,
+                    &client,
+                )
+                .await
+                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+
+            Python::with_gil(|py| {
+                Ok(Py::new(
+                    py,
+                    PyStories {
+                        stories: stories.stories
+                            .into_iter()
+                            .map(|s| PyStory {
+                                site: s.site,
+                                story_name: s.story_name.unwrap_or_default(),
+                                story_id: s.story_id.unwrap_or_default(),
+                                author_name: s.author_name.unwrap_or_default(),
+                                author_id: s.author_id.unwrap_or_default(),
+                                description: s.description.unwrap_or_default(),
+                                img_url: s.img_url.unwrap_or_default(),
+                                word_count: s.word_count.unwrap_or_default(),
+                                reviews: s.reviews.unwrap_or_default(),
+                                favorites: s.favorites.unwrap_or_default(),
+                                follows: s.follows.unwrap_or_default(),
+                                publish_date: s.publish_date.unwrap_or_default(),
+                                updated_date: s.updated_date.unwrap_or_default(),
+                                status: s.status.unwrap_or_default(),
+                                views: s.views.unwrap_or_default(),
+                                rating: s.rating.unwrap_or_default(),
+                                chapter_count: s.chapter_count.unwrap_or_default(),
+                                chapters: vec![],
+                            })
+                            .collect(),
+                    },
+                )?
+                .into_py(py))
+            })
+        })
+    }
 }
 
 use pyo3::prelude::*;
@@ -172,7 +244,7 @@ use pyo3::prelude::*;
 #[pymodule]
 fn pybindings(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySite>()?;
-    // Add more classes or functions as needed
+    m.add_class::<PyStories>()?;
     Ok(())
 }
 
