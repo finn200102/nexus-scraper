@@ -162,7 +162,34 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
 pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
     let document = Html::parse_document(html);
 
-    let selector = Selector::parse("div.z-list.zhover.zpointer").unwrap();
+    // Try multiple selectors to find story listings
+    let selectors = ["div.z-list", "li.z-list", "div.story", ".z-list"];
+
+    let mut selector = None;
+    for s in &selectors {
+        if let Ok(s) = Selector::parse(s) {
+            if document.select(&s).next().is_some() {
+                selector = Some(s);
+                break;
+            }
+        }
+    }
+
+    let selector = match selector {
+        Some(s) => s,
+        None => {
+            eprintln!(
+                "Debug: No story selectors found. HTML length: {}",
+                html.len()
+            );
+            return Stories { stories: vec![] };
+        }
+    };
+
+    eprintln!(
+        "Debug: Using selector, found {} elements",
+        document.select(&selector).count()
+    );
 
     let mut stories = Vec::new();
 
@@ -195,11 +222,143 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             .and_then(|id_str| id_str.parse::<u64>().ok())
             .unwrap_or(0);
 
+        // Parse author name - find the author link (by href containing /u/)
+        let author_name = story_element
+            .select(&a_selector)
+            .filter(|a| {
+                a.value()
+                    .attr("href")
+                    .map(|h| h.contains("/u/"))
+                    .unwrap_or(false)
+            })
+            .next()
+            .map(|a| a.text().collect::<String>())
+            .unwrap_or_else(|| "Unknown".to_string());
+
+        // Parse img URL from the story image
+        let img_url = story_element
+            .select(&Selector::parse("img.cimage").ok().unwrap())
+            .next()
+            .and_then(|img| {
+                img.value()
+                    .attr("data-original")
+                    .or_else(|| img.value().attr("src"))
+                    .map(|s| format!("https://www.fanfiction.net{}", s))
+            });
+
+        // Parse description from div.z-indent.z-padtop (text content only, excluding nested div)
+        let desc_selector = Selector::parse("div.z-indent.z-padtop").ok().unwrap();
+        let description = story_element
+            .select(&desc_selector)
+            .next()
+            .map(|div| {
+                // Get text but exclude text from nested div.z-padtop2
+                let nested_selector = Selector::parse("div.z-padtop2").ok().unwrap();
+                let nested_text: String = div
+                    .select(&nested_selector)
+                    .flat_map(|e| e.text())
+                    .collect();
+
+                let full_text: String = div.text().collect();
+                // Remove the nested div text from the full text
+                full_text.replace(&nested_text, "").trim().to_string()
+            })
+            .filter(|s| !s.is_empty());
+
+        // Parse metadata from div.z-indent.z-padtop
+        let metadata_selector = Selector::parse("div.z-padtop2.xgray").unwrap();
+        let metadata_text = story_element
+            .select(&metadata_selector)
+            .next()
+            .map(|e| e.text().collect::<String>())
+            .unwrap_or_default();
+
+        // Parse chapters
+        let chapters = metadata_text
+            .split("Chapters:")
+            .nth(1)
+            .and_then(|s| s.split_whitespace().next())
+            .map(|s| s.replace(',', "").parse::<u64>().ok())
+            .flatten();
+
+        // Parse word count
+        let word_count = metadata_text
+            .split("Words:")
+            .nth(1)
+            .and_then(|s| s.split('-').next())
+            .map(|s| s.trim().replace(',', "").parse::<u64>().ok())
+            .flatten();
+
+        // Parse reviews
+        let reviews = metadata_text
+            .split("Reviews:")
+            .nth(1)
+            .and_then(|s| s.split_whitespace().next())
+            .map(|s| s.replace(',', "").parse::<u64>().ok())
+            .flatten();
+
+        // Parse favorites
+        let favorites = metadata_text
+            .split("Favs:")
+            .nth(1)
+            .and_then(|s| s.split_whitespace().next())
+            .map(|s| s.replace(',', "").parse::<u64>().ok())
+            .flatten();
+
+        // Parse follows
+        let follows = metadata_text
+            .split("Follows:")
+            .nth(1)
+            .and_then(|s| s.split_whitespace().next())
+            .map(|s| s.replace(',', "").parse::<u64>().ok())
+            .flatten();
+
+        // Parse updated date - first span with data-xutime
+        let updated_date = story_element
+            .select(&Selector::parse("span[data-xutime]").ok().unwrap())
+            .next()
+            .and_then(|e| e.value().attr("data-xutime"))
+            .and_then(|timestamp| {
+                chrono::DateTime::from_timestamp(timestamp.parse().ok()?, 0)
+                    .map(|dt| dt.format("%b %d, %Y").to_string())
+            });
+
+        // Parse publish date - second span with data-xutime
+        let publish_date = story_element
+            .select(&Selector::parse("span[data-xutime]").ok().unwrap())
+            .nth(1)
+            .and_then(|e| e.value().attr("data-xutime"))
+            .and_then(|timestamp| {
+                chrono::DateTime::from_timestamp(timestamp.parse().ok()?, 0)
+                    .map(|dt| dt.format("%b %d, %Y").to_string())
+            });
+
+        // Parse status (Complete or Ongoing)
+        let status = if metadata_text.contains("Complete") {
+            Some("Complete".to_string())
+        } else if metadata_text.contains("In Progress") {
+            Some("In Progress".to_string())
+        } else {
+            None
+        };
+
         stories.push(Story {
             site: "fanfiction".to_string(),
             story_name: Some(title),
             author_id: Some(author_id),
+            author_name: Some(author_name),
             story_id: Some(story_id),
+            chapters: vec![],
+            description: description,
+            img_url: img_url,
+            word_count: word_count,
+            reviews: reviews,
+            favorites: favorites,
+            follows: follows,
+            publish_date: publish_date,
+            updated_date: updated_date,
+            status: status,
+            chapter_count: chapters,
             ..Default::default()
         });
     }
