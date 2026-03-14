@@ -1,4 +1,4 @@
-use crate::models::Author;
+use crate::models::{Author, Chapter};
 use regex::Regex;
 use scraper::{Html, Selector};
 
@@ -207,4 +207,54 @@ fn parse_number(text: &str) -> Option<u64> {
     let num: f64 = num_str.parse().ok()?;
 
     Some((num * multiplier as f64) as u64)
+}
+
+pub fn parse_catalog(html: &str) -> Vec<Chapter> {
+    let document = Html::parse_document(html);
+    let mut chapters = Vec::new();
+    let mut global_chapter_number: u32 = 1;
+
+    for li in document.select(&Selector::parse("li[data-cid]").ok().unwrap()) {
+        let chapter_id = li
+            .value()
+            .attr("data-cid")
+            .and_then(|s| s.parse::<u64>().ok());
+
+        let chapter_number = global_chapter_number;
+        global_chapter_number += 1;
+
+        let title = li
+            .select(&Selector::parse("strong").ok().unwrap())
+            .next()
+            .map(|el| el.text().collect::<String>())
+            .map(|s| s.trim().to_string());
+
+        let href = li
+            .select(&Selector::parse("a").ok().unwrap())
+            .next()
+            .and_then(|el| el.value().attr("href"))
+            .map(|s| s.to_string());
+
+        chapters.push(Chapter {
+            site: "webnovel".to_string(),
+            title,
+            chapter_number: Some(chapter_number),
+            chapter_id,
+            text: None,
+        });
+    }
+
+    chapters
+}
+
+pub fn extract_story_id_from_url(url: &str) -> Option<u64> {
+    let parts: Vec<&str> = url.split('/').collect();
+    for part in parts {
+        if part.contains('_') {
+            if let Some(id) = part.split('_').last() {
+                return id.parse::<u64>().ok();
+            }
+        }
+    }
+    None
 }

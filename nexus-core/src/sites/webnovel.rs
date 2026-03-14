@@ -48,10 +48,13 @@ impl Site for WebnovelSite {
 
     async fn fetch_chapters(
         &self,
-        _story_id: u64,
-        _client: &reqwest::Client,
+        story_id: u64,
+        client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        Err(CoreError::UnsupportedOperation("fetch_chapters not supported for webnovel".into()))
+        let url = format!("https://www.webnovel.com/book/{}/catalog", story_id);
+        let html = network::fetch_via_proxy(&url, client).await?;
+        let chapters = webnovel::parse_catalog(&html);
+        Ok(chapters)
     }
 
     async fn fetch_chapters_content(
