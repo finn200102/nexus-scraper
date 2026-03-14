@@ -20,7 +20,7 @@ impl Site for WebnovelSite {
         chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://www.webnovel.com/book/{}_{}/chapter_{}", story_id, story_id, chapter_id);
+        let url = format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}");
         let html = network::fetch_via_proxy_browser(&url, client).await?;
         
         let title = webnovel::parse_chapter_title(&html);
@@ -63,7 +63,7 @@ impl Site for WebnovelSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://www.webnovel.com/book/{}/catalog", story_id);
+        let url = format!("https://www.webnovel.com/book/{story_id}/catalog");
         let html = network::fetch_via_proxy_browser(&url, client).await?;
         let chapters = webnovel::parse_catalog(&html);
         Ok(chapters)
@@ -139,7 +139,7 @@ fn extract_story_id(url: &str) -> Option<u64> {
     for (i, part) in parts.iter().enumerate() {
         if *part == "book" {
             if let Some(id_part) = parts.get(i + 1) {
-                let id = id_part.split('_').last()?;
+                let id = id_part.split('_').next_back()?;
                 return id.parse::<u64>().ok();
             }
         }

@@ -4,7 +4,6 @@ use crate::error::CoreError;
 use crate::sites::Site;
 use crate::models::{Stories, Story, Author};
 use crate::parser::royalroad;
-use crate::parser::fanfiction;
 
 pub struct RoyalroadSite;
 
@@ -21,7 +20,7 @@ impl Site for RoyalroadSite{
         _chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://www.royalroad.com/fiction/{}/chapter/{}", story_id, chapter_id);
+        let url = format!("https://www.royalroad.com/fiction/{story_id}/chapter/{chapter_id}");
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -38,7 +37,7 @@ impl Site for RoyalroadSite{
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://www.royalroad.com/fiction/{}", story_id);
+        let url = format!("https://www.royalroad.com/fiction/{story_id}");
         let html = network::fetch_via_proxy(&url, client).await?;
         let chapters = royalroad::parse_chapters(&html);
 
@@ -113,7 +112,7 @@ impl Site for RoyalroadSite{
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
         let story_name = split.get(5).map(|s| s.to_string());
 
-        let chapters = self.fetch_chapters(story_id, &client).await?;
+        let chapters = self.fetch_chapters(story_id, client).await?;
        // Get html
         let url = format!("https://www.royalroad.com/fiction/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
@@ -136,27 +135,27 @@ impl Site for RoyalroadSite{
 
 
         Ok(Story{
-            story_name: story_name,
+            story_name,
             story_id: Some(story_id),
-            chapters: chapters,
-            author_name: author_name,
-            author_id: author_id,
+            chapters,
+            author_name,
+            author_id,
             site: "royalroad".to_string(),
             description: Some(description),
-            img_url: img_url,
-            tags: tags,
+            img_url,
+            tags,
             genre: vec![],
-            views: views,
+            views,
             follows: followers,
-            favorites: favorites,
-            reviews: reviews,
-            word_count: word_count,
-            rating: rating,
+            favorites,
+            reviews,
+            word_count,
+            rating,
             publish_date: None,
             updated_date: None,
             status: None,
             chapter_count: None,
-            url: Some(format!("https://www.royalroad.com/fiction/{}", story_id)),
+            url: Some(format!("https://www.royalroad.com/fiction/{story_id}")),
 
         })
     }

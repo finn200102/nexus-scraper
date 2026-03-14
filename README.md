@@ -19,6 +19,7 @@ A web novel and fanfiction scraper written in Rust. Downloads stories from multi
 | Archive of Our Own | `archive` | AO3 stories and chapters |
 | SpaceBattles | `spacebattles` | Forum-hosted fiction |
 | Royal Road | `royalroad` | Web novels and serials |
+| Webnovel | `webnovel` | Chinese web novels, requires browser proxy |
 
 ## Requirements
 
@@ -214,17 +215,22 @@ cargo run -p nexus-cli -- fetch-stories-by-series \
 
 #### get-story-data-from-url
 
-Parse a story URL to extract all metadata.
+Parse a story URL to extract all metadata. The `--site` flag is optional for most sites - it will be auto-detected from the URL.
 
 ```sh
+# With explicit site
 cargo run -p nexus-cli -- get-story-data-from-url \
   --site fanfiction \
   --url "https://www.fanfiction.net/s/12345678/1/Story-Title"
+
+# Auto-detect site from URL (recommended)
+cargo run -p nexus-cli -- get-story-data-from-url \
+  --url "https://www.webnovel.com/book/story-name_123456"
 ```
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--site` | string | required | Site identifier |
+| `--site` | string | auto-detect | Site identifier (optional) |
 | `--url` | string | required | Full story URL |
 
 **Output:** `story.json` - Complete story metadata
@@ -316,10 +322,13 @@ nexus-scraper/
 │   │   │   ├── fanfiction.rs
 │   │   │   ├── archive.rs
 │   │   │   ├── spacebattles.rs
-│   │   │   └── royalroad.rs
-│   │   ├── parser/     # HTML parsing logic
-│   │   ├── network.rs  # HTTP client utilities
+│   │   │   ├── royalroad.rs
+│   │   │   └── webnovel.rs
+│   │   ├── parser/     # HTML parsing logic per site
+│   │   ├── network.rs  # HTTP client, proxy utilities, date parsing
 │   │   └── error.rs    # Error types
+│   ├── tests/          # Integration tests
+│   │   └── fixtures/   # HTML fixtures for testing
 │   └── Cargo.toml
 ├── nexus-cli/           # Command-line interface
 │   ├── src/main.rs     # CLI commands and handlers
@@ -338,6 +347,34 @@ nexus-scraper/
 
 - **Parsers** (`nexus-core/src/parser/`): HTML scraping and extraction logic per site.
 
+## Testing
+
+Run tests with cargo:
+
+```sh
+# Run all tests
+cargo test
+
+# Run tests for specific crate
+cargo test -p nexus-core
+
+# Run specific test
+cargo test -p nexus-core test_parse_date
+```
+
+### Test Structure
+
+Tests are located in:
+- **Unit tests**: Inline in source files (e.g., `nexus-core/src/network.rs`)
+- **Integration tests**: `nexus-core/tests/`
+- **Fixtures**: `nexus-core/tests/fixtures/` - Sample HTML for parsing tests
+
+### Adding New Parser Tests
+
+1. Create HTML fixture in `nexus-core/tests/fixtures/{site}/`
+2. Add test in `nexus-core/tests/test_{site}.rs`
+3. Use `include_str!("fixtures/{site}/file.html")` to load fixtures
+
 ## Troubleshooting
 
 ### "Flaresolver not responding"
@@ -351,7 +388,7 @@ docker start flaresolverr
 
 ### "Unknown site" error
 
-Check the site identifier matches exactly: `fanfiction`, `archive`, `spacebattles`, or `royalroad`.
+Check the site identifier matches exactly: `fanfiction`, `archive`, `spacebattles`, `royalroad`, or `webnovel`.
 
 ### Rate limiting
 

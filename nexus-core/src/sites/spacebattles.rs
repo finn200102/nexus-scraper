@@ -35,13 +35,13 @@ impl Site for SpacebattlesSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let first_url = format!("https://forums.spacebattles.com/threads/{}/reader/page-1", story_id);
+        let first_url = format!("https://forums.spacebattles.com/threads/{story_id}/reader/page-1");
         let first_html = network::fetch_via_proxy(&first_url, client).await?;
         let pages = spacebattles::parse_spacebattles_pages(&first_html) + 1;
         let mut all_chapters = Vec::new();
         // pages+1 TODO find out why
         for page_number in 1..pages {
-            let url = format!("https://forums.spacebattles.com/threads/{}/reader/page-{}", story_id, page_number);
+            let url = format!("https://forums.spacebattles.com/threads/{story_id}/reader/page-{page_number}");
             let html = network::fetch_via_proxy(&url, client).await?;
             let chapters = spacebattles::parse_spacebattles_chapters(&html);
             all_chapters.extend(chapters);
@@ -114,7 +114,7 @@ impl Site for SpacebattlesSite {
         let sortby_name = sortby_id_to_name(sortby_id);
         let mut all_stories = Vec::new();
         for page_number in 1..num_pages {
-            let url = format!("https://forums.spacebattles.com/forums/creative-writing.18/page-{}?order={}", page_number, sortby_name);
+            let url = format!("https://forums.spacebattles.com/forums/creative-writing.18/page-{page_number}?order={sortby_name}");
             let html = network::fetch_via_proxy(&url, client).await?;
             let stories = spacebattles::parse_spacebattles_stories(&html);
             all_stories.extend(stories);
@@ -136,9 +136,9 @@ impl Site for SpacebattlesSite {
         (name_part.to_string(), id_part.to_string())
     };
         let story_id: u64 = story_id.parse()
-        .map_err(|e| CoreError::Parse(format!("Failed to parse story_id '{}': {}", story_id, e)))?;
+        .map_err(|e| CoreError::Parse(format!("Failed to parse story_id '{story_id}': {e}")))?;
 
-        let chapters = self.fetch_chapters(story_id, &client).await?;
+        let chapters = self.fetch_chapters(story_id, client).await?;
         // Get html
         let url = format!("https://forums.spacebattles.com/threads/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
@@ -157,16 +157,16 @@ impl Site for SpacebattlesSite {
         Ok(Story{
             story_name: if story_name.is_empty() { None } else { Some(story_name) },
             story_id: Some(story_id),
-            chapters: chapters,
-            author_name: author_name,
-            author_id: author_id,
+            chapters,
+            author_name,
+            author_id,
             site: "spacebattles".to_string(),
             description: Some(description),
-            tags: tags,
+            tags,
             genre: vec![],
-            publish_date: publish_date,
-            status: status,
-            url: Some(format!("https://forums.spacebattles.com/threads/{}/", story_id)),
+            publish_date,
+            status,
+            url: Some(format!("https://forums.spacebattles.com/threads/{story_id}/")),
             ..Default::default()
 
         })

@@ -19,7 +19,7 @@ impl Site for ArchiveSite{
         _chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://archiveofourown.org/works/{}/chapters/{}", story_id, chapter_id);
+        let url = format!("https://archiveofourown.org/works/{story_id}/chapters/{chapter_id}");
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -35,7 +35,7 @@ impl Site for ArchiveSite{
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://archiveofourown.org/works/{}/navigate", story_id);
+        let url = format!("https://archiveofourown.org/works/{story_id}/navigate");
         let html = network::fetch_via_proxy(&url, client).await?;
         let mut chapters = archive::parse_archive_chapters(&html);
         // add chapter number to chapter_number
@@ -67,7 +67,7 @@ impl Site for ArchiveSite{
         author_name: String,
         client: &reqwest::Client,
     ) -> Result<Stories> {
-        let url = format!("https://archiveofourown.org/users/{}/series", author_name);
+        let url = format!("https://archiveofourown.org/users/{author_name}/series");
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -117,7 +117,7 @@ impl Site for ArchiveSite{
         let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
 
-        let chapters = self.fetch_chapters(story_id, &client).await?;
+        let chapters = self.fetch_chapters(story_id, client).await?;
         // Get html
         let url = format!("https://archiveofourown.org/works/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
@@ -143,23 +143,23 @@ impl Site for ArchiveSite{
 
         Ok(Story{
             story_id: Some(story_id),
-            chapters: chapters,
-            author_name: author_name,
-            author_id: author_id,
+            chapters,
+            author_name,
+            author_id,
             site: "archive".to_string(),
             description: Some(description),
-            tags: tags,
+            tags,
             genre: vec![],
-            word_count: word_count,
-            reviews: reviews,
-            favorites: favorites,
-            follows: follows,
-            publish_date: publish_date,
-            updated_date: updated_date,
-            status: status,
-            views: views,
+            word_count,
+            reviews,
+            favorites,
+            follows,
+            publish_date,
+            updated_date,
+            status,
+            views,
             chapter_count: None,
-            url: Some(format!("https://archiveofourown.org/works/{}", story_id)),
+            url: Some(format!("https://archiveofourown.org/works/{story_id}")),
             ..Default::default()
         })
 

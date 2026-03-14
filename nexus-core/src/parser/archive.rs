@@ -11,7 +11,7 @@ pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
         .select(&chapter_number_selector)
         .next()
         .and_then(|e| e.value().attr("id"))
-        .and_then(|id_str| id_str.split('-').last())
+        .and_then(|id_str| id_str.split('-').next_back())
         .and_then(|number_str| number_str.parse::<u32>().ok())
         .unwrap_or(0);
 
@@ -43,7 +43,7 @@ pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
             .select(&chapter_selector)
             .next()
             .and_then(|e| e.value().attr("href"))
-            .and_then(|href| href.split('/').last())
+            .and_then(|href| href.split('/').next_back())
             .and_then(|id_str| id_str.parse::<u64>().ok())
             .unwrap_or(0);
 
@@ -113,7 +113,7 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
             .select(&title_selector)
             .next()
             .and_then(|e| e.value().attr("href"))
-            .and_then(|href| href.split('/').last())
+            .and_then(|href| href.split('/').next_back())
             .and_then(|id_str| id_str.parse::<u64>().ok())
             .unwrap_or(0);
 
@@ -122,7 +122,7 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
             story_name: Some(title),
             author_name: Some(author_name.to_string()),
             story_id: Some(story_id),
-            url: Some(format!("https://archiveofourown.org/works/{}", story_id)),
+            url: Some(format!("https://archiveofourown.org/works/{story_id}")),
             ..Default::default()
         });
     }

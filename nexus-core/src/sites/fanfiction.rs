@@ -25,7 +25,7 @@ impl Site for FanFictionSite {
         chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://www.fanfiction.net/s/{}/{}", story_id, chapter_number);
+        let url = format!("https://www.fanfiction.net/s/{story_id}/{chapter_number}");
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -42,7 +42,7 @@ impl Site for FanFictionSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://www.fanfiction.net/s/{}", story_id);
+        let url = format!("https://www.fanfiction.net/s/{story_id}");
         let html = network::fetch_via_proxy(&url, client).await?;
         let chapters = fanfiction::parse_fanfiction_chapters(&html);
 
@@ -55,7 +55,7 @@ impl Site for FanFictionSite {
         story_id: u64,
         client: &reqwest::Client,
         ) -> Result<Vec<Chapter>> {
-        let url = format!("https://www.fanfiction.net/s/{}", story_id);
+        let url = format!("https://www.fanfiction.net/s/{story_id}");
         let html = network::fetch_via_proxy(&url, client).await?;
         let mut chapters = fanfiction::parse_fanfiction_chapters(&html);
 
@@ -83,7 +83,7 @@ impl Site for FanFictionSite {
         _author_name: String,
         client: &reqwest::Client,
     ) -> Result<Stories> {
-        let url = format!("https://www.fanfiction.net/u/{}", author_id);
+        let url = format!("https://www.fanfiction.net/u/{author_id}");
 
         let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -109,7 +109,7 @@ impl Site for FanFictionSite {
 
         for page in 1..=num_pages.max(1) {
             // URL format: https://www.fanfiction.net/{medium_name}/{series_name}/?srt={}&r={}&len={}&p={}
-            let url = format!("https://www.fanfiction.net/{}/{}/?srt={}&r={}&len={}&t={}&p={}", medium_name, series_name, sortby_id, rating_id, word_count, time_range, page);
+            let url = format!("https://www.fanfiction.net/{medium_name}/{series_name}/?srt={sortby_id}&r={rating_id}&len={word_count}&t={time_range}&p={page}");
 
             let html = network::fetch_via_proxy(&url, client).await?;
 
@@ -142,7 +142,7 @@ impl Site for FanFictionSite {
         let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
 
-        let chapters = self.fetch_chapters(story_id, &client).await?;
+        let chapters = self.fetch_chapters(story_id, client).await?;
        // Get html
         let url = format!("https://www.fanfiction.net/s/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
@@ -168,25 +168,25 @@ impl Site for FanFictionSite {
         Ok(Story{
             story_name: Some(story_name),
             story_id: Some(story_id),
-            chapters: chapters,
-            author_name: author_name,
-            author_id: author_id,
+            chapters,
+            author_name,
+            author_id,
             site: "fanfiction".to_string(),
             description: Some(description),
-            img_url: img_url,
-            tags: tags,
-            genre: genre,
-            word_count: word_count,
-            reviews: reviews,
-            favorites: favorites,
-            follows: follows,
-            publish_date: publish_date,
-            updated_date: updated_date,
-            status: status,
+            img_url,
+            tags,
+            genre,
+            word_count,
+            reviews,
+            favorites,
+            follows,
+            publish_date,
+            updated_date,
+            status,
             views: None,
             rating: None,
             chapter_count: None,
-            url: Some(format!("https://www.fanfiction.net/s/{}/", story_id)),
+            url: Some(format!("https://www.fanfiction.net/s/{story_id}/")),
 
         })
     }

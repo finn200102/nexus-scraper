@@ -41,7 +41,7 @@ pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
             .trim()
             .to_string();
 
-        if !seen.insert((chapter_number)) {
+        if !seen.insert(chapter_number) {
             continue;
         }
 
@@ -69,8 +69,8 @@ pub fn parse_tags(html: &str) -> Vec<String> {
         if let Some(tag_name) = tag
             .value()
             .attr("href")
-            .and_then(|href| href.split('/').last())
-            .and_then(|s| s.split('=').last())
+            .and_then(|href| href.split('/').next_back())
+            .and_then(|s| s.split('=').next_back())
         {
             tags.push(tag_name.to_string());
         }
@@ -114,7 +114,7 @@ pub fn parse_cover(html: &str) -> Option<String> {
         .select(&selector)
         .next()
         .and_then(|img| img.value().attr("src"))
-        .map(|url| format!("https://www.fanfiction.net{}", url))
+        .map(|url| format!("https://www.fanfiction.net{url}"))
 }
 
 pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
@@ -135,7 +135,7 @@ pub fn parse_fanfiction_stories(html: &str, author_id: u64) -> Stories {
                 .select(&title_selector)
                 .next()
                 .and_then(|e| e.value().attr("href"))
-                .and_then(|href| href.split('/').last())
+                .and_then(|href| href.split('/').next_back())
                 .unwrap_or("")
                 .to_string();
 
@@ -203,7 +203,7 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             .select(&title_selector)
             .next()
             .and_then(|e| e.value().attr("href"))
-            .and_then(|href| href.split('/').last())
+            .and_then(|href| href.split('/').next_back())
             .unwrap_or("")
             .to_string();
 
@@ -244,7 +244,7 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
                 img.value()
                     .attr("data-original")
                     .or_else(|| img.value().attr("src"))
-                    .map(|s| format!("https://www.fanfiction.net{}", s))
+                    .map(|s| format!("https://www.fanfiction.net{s}"))
             });
 
         // Parse description from div.z-indent.z-padtop (text content only, excluding nested div)
@@ -279,40 +279,35 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             .split("Chapters:")
             .nth(1)
             .and_then(|s| s.split_whitespace().next())
-            .map(|s| s.replace(',', "").parse::<u64>().ok())
-            .flatten();
+            .and_then(|s| s.replace(',', "").parse::<u64>().ok());
 
         // Parse word count
         let word_count = metadata_text
             .split("Words:")
             .nth(1)
             .and_then(|s| s.split('-').next())
-            .map(|s| s.trim().replace(',', "").parse::<u64>().ok())
-            .flatten();
+            .and_then(|s| s.trim().replace(',', "").parse::<u64>().ok());
 
         // Parse reviews
         let reviews = metadata_text
             .split("Reviews:")
             .nth(1)
             .and_then(|s| s.split_whitespace().next())
-            .map(|s| s.replace(',', "").parse::<u64>().ok())
-            .flatten();
+            .and_then(|s| s.replace(',', "").parse::<u64>().ok());
 
         // Parse favorites
         let favorites = metadata_text
             .split("Favs:")
             .nth(1)
             .and_then(|s| s.split_whitespace().next())
-            .map(|s| s.replace(',', "").parse::<u64>().ok())
-            .flatten();
+            .and_then(|s| s.replace(',', "").parse::<u64>().ok());
 
         // Parse follows
         let follows = metadata_text
             .split("Follows:")
             .nth(1)
             .and_then(|s| s.split_whitespace().next())
-            .map(|s| s.replace(',', "").parse::<u64>().ok())
-            .flatten();
+            .and_then(|s| s.replace(',', "").parse::<u64>().ok());
 
         // Parse updated date - first span with data-xutime
         let updated_date = story_element
@@ -350,17 +345,17 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             author_name: Some(author_name),
             story_id: Some(story_id),
             chapters: vec![],
-            description: description,
-            img_url: img_url,
-            word_count: word_count,
-            reviews: reviews,
-            favorites: favorites,
-            follows: follows,
-            publish_date: publish_date,
-            updated_date: updated_date,
-            status: status,
+            description,
+            img_url,
+            word_count,
+            reviews,
+            favorites,
+            follows,
+            publish_date,
+            updated_date,
+            status,
             chapter_count: chapters,
-            url: Some(format!("https://www.fanfiction.net/s/{}/", story_id)),
+            url: Some(format!("https://www.fanfiction.net/s/{story_id}/")),
             ..Default::default()
         });
     }

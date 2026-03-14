@@ -1,9 +1,7 @@
-use crate::models::{Author, Chapter, Stories, Story};
+use crate::models::{Author, Chapter};
 use regex::Regex;
 use scraper::{Html, Selector};
 use serde::Deserialize;
-use serde_json::Value;
-use std::collections::HashSet;
 
 pub fn parse_chapter(html: &str, chapter_id: u64) -> Chapter {
     let document = Html::parse_document(html);
@@ -86,8 +84,8 @@ pub fn parse_tags(html: &str) -> Vec<String> {
         if let Some(tag_name) = tag
             .value()
             .attr("href")
-            .and_then(|href| href.split('/').last())
-            .and_then(|s| s.split('=').last())
+            .and_then(|href| href.split('/').next_back())
+            .and_then(|s| s.split('=').next_back())
         {
             tags.push(tag_name.to_string());
         }

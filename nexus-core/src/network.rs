@@ -104,7 +104,7 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
         .unwrap()
         .as_millis());
 
-    let mut payload = ProxyOptions {
+    let payload = ProxyOptions {
         cmd: "request.get".to_string(),
         url: url.to_string(),
         session,

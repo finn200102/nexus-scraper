@@ -29,7 +29,7 @@ pub fn parse_cover(html: &str) -> Option<String> {
     let src = document.select(&selector).next()?.value().attr("src")?;
 
     if src.starts_with("//") {
-        Some(format!("https:{}", src))
+        Some(format!("https:{src}"))
     } else {
         Some(src.to_string())
     }
@@ -44,7 +44,7 @@ pub fn parse_author(html: &str) -> Option<Author> {
     {
         let author_name = element.text().collect::<String>().trim().to_string();
         if let Some(href) = element.value().attr("href") {
-            if let Some(author_id) = href.split('/').last()?.parse::<u64>().ok() {
+            if let Ok(author_id) = href.split('/').next_back()?.parse::<u64>() {
                 return Some(Author {
                     author_name: Some(author_name),
                     author_id: Some(author_id),
@@ -278,7 +278,7 @@ pub fn extract_story_id_from_url(url: &str) -> Option<u64> {
     let parts: Vec<&str> = url.split('/').collect();
     for part in parts {
         if part.contains('_') {
-            if let Some(id) = part.split('_').last() {
+            if let Some(id) = part.split('_').next_back() {
                 return id.parse::<u64>().ok();
             }
         }

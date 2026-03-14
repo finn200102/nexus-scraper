@@ -1,4 +1,4 @@
-use crate::models::{Author, Chapter, Stories, Story};
+use crate::models::{Author, Chapter, Story};
 use crate::parse_date;
 use scraper::{Html, Selector};
 
@@ -18,8 +18,8 @@ pub fn parse_spacebattles_pages(html: &str) -> u32 {
         .and_then(|href| {
             href.split('/')
                 .filter(|s| !s.is_empty())
-                .last()
-                .and_then(|segment| segment.split('-').last())
+                .next_back()
+                .and_then(|segment| segment.split('-').next_back())
                 .and_then(|s| s.parse::<u32>().ok())
         })
         .unwrap_or(1);
@@ -71,7 +71,7 @@ pub fn parse_spacebattles_chapters(html: &str) -> Vec<Chapter> {
 
 pub fn parse_spacebattles_chapter(html: &str, chapter_id: u64, chapter_number: u32) -> Chapter {
     let document = Html::parse_document(html);
-    let article_selector = format!("article#js-post-{}", chapter_id);
+    let article_selector = format!("article#js-post-{chapter_id}");
     let article = Selector::parse(&article_selector).unwrap();
     let title_selector = Selector::parse("span.threadmarkLabel").unwrap();
     let text_selector = Selector::parse("div.bbWrapper").unwrap();
@@ -142,8 +142,7 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
             author_id: Some(author_id),
             story_id: Some(story_id),
             url: Some(format!(
-                "https://forums.spacebattles.com/threads/{}/",
-                story_id
+                "https://forums.spacebattles.com/threads/{story_id}/"
             )),
             ..Default::default()
         });
@@ -181,8 +180,8 @@ pub fn parse_tags(html: &str) -> Vec<String> {
         if let Some(tag_name) = tag
             .value()
             .attr("href")
-            .and_then(|href| href.split('/').last())
-            .and_then(|s| s.split('=').last())
+            .and_then(|href| href.split('/').next_back())
+            .and_then(|s| s.split('=').next_back())
         {
             tags.push(tag_name.to_string());
         }
