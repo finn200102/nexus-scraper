@@ -1,4 +1,5 @@
 use crate::models::{Author, Chapter, Stories, Story};
+use crate::parse_date;
 use scraper::{Html, Selector};
 
 pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
@@ -155,20 +156,26 @@ pub fn parse_publish_date(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("dd.published").ok()?;
 
-    document
+    let date_str = document
         .select(&selector)
-        .next()
-        .map(|dd| dd.text().collect::<String>())
+        .next()?
+        .text()
+        .collect::<String>();
+
+    parse_date(&date_str)
 }
 
 pub fn parse_updated_date(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("dd.status").ok()?;
 
-    document
+    let date_str = document
         .select(&selector)
-        .next()
-        .map(|dd| dd.text().collect::<String>())
+        .next()?
+        .text()
+        .collect::<String>();
+
+    parse_date(&date_str)
 }
 
 pub fn parse_word_count(html: &str) -> Option<u64> {

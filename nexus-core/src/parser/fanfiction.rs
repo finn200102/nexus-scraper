@@ -1,4 +1,5 @@
 use crate::models::{Author, Chapter, Stories, Story};
+use crate::parse_date;
 use scraper::{Html, Selector};
 use std::collections::HashSet;
 
@@ -507,14 +508,15 @@ pub fn parse_publish_date(html: &str) -> Option<String> {
         .text()
         .collect::<String>();
 
-    span_text
+    let date_str = span_text
         .split("Published:")
         .nth(1)?
         .split('-')
         .next()?
         .trim()
-        .to_string()
-        .into()
+        .to_string();
+
+    parse_date(&date_str)
 }
 
 pub fn parse_updated_date(html: &str) -> Option<String> {
@@ -527,7 +529,7 @@ pub fn parse_updated_date(html: &str) -> Option<String> {
         .text()
         .collect::<String>();
 
-    span_text
+    let date_str = span_text
         .split("Updated:")
         .nth(1)?
         .split("Published:")
@@ -535,8 +537,9 @@ pub fn parse_updated_date(html: &str) -> Option<String> {
         .trim()
         .trim_end_matches('-')
         .trim()
-        .to_string()
-        .into()
+        .to_string();
+
+    parse_date(&date_str)
 }
 
 pub fn parse_status(html: &str) -> Option<String> {

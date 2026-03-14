@@ -1,6 +1,7 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, CoreError};
+use chrono::NaiveDate;
 
 
 pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
@@ -18,6 +19,40 @@ pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
             "Could not detect site from URL. Please specify site manually.\nKnown sites: fanfiction, archive, royalroad, spacebattles".into()
         ))
     }
+}
+
+pub fn parse_date(date_str: &str) -> Option<String> {
+    let date_str = date_str.trim();
+    
+    if date_str.is_empty() {
+        return None;
+    }
+    
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%Y-%m-%d") {
+        return Some(date.format("%Y-%m-%d").to_string());
+    }
+    
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%b %d, %Y") {
+        return Some(date.format("%Y-%m-%d").to_string());
+    }
+    
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%d-%b-%Y") {
+        return Some(date.format("%Y-%m-%d").to_string());
+    }
+    
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%B %d, %Y") {
+        return Some(date.format("%Y-%m-%d").to_string());
+    }
+    
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%d %B %Y") {
+        return Some(date.format("%Y-%m-%d").to_string());
+    }
+    
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%Y/%m/%d") {
+        return Some(date.format("%Y-%m-%d").to_string());
+    }
+    
+    None
 }
 
 

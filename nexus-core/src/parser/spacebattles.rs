@@ -1,4 +1,5 @@
 use crate::models::{Author, Chapter, Stories, Story};
+use crate::parse_date;
 use scraper::{Html, Selector};
 
 pub fn parse_spacebattles_pages(html: &str) -> u32 {
@@ -219,7 +220,9 @@ pub fn parse_created_date(html: &str) -> Option<String> {
     let selector = Selector::parse("time.u-dt").ok()?;
 
     let element = document.select(&selector).next()?;
-    element.value().attr("data-date-string").map(String::from)
+    let date_str = element.value().attr("data-date-string")?;
+
+    parse_date(date_str)
 }
 
 pub fn parse_status(html: &str) -> Option<String> {
