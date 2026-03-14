@@ -83,6 +83,8 @@ enum Commands {
         word_count: u32,
         #[arg(long, default_value = "0")]
         time_range: u32,
+        #[arg(long, default_value = "1")]
+        num_pages: u32,
     }
         
 }
@@ -181,11 +183,12 @@ async fn handle_fetch_stories_by_series(
     rating_id: u32,
     word_count: u32,
     time_range: u32,
+    num_pages: u32,
     client: &reqwest::Client,
 ) -> Result<()> {
 
     let site = get_site(&site)?;
-    let stories = site.fetch_stories_by_series(medium_name, &series_name, sortby_id, rating_id, word_count, time_range, &client).await?;
+    let stories = site.fetch_stories_by_series(medium_name, &series_name, sortby_id, rating_id, word_count, time_range, num_pages, &client).await?;
     let filename = format!("stories_{}.json", series_name);
     let json = serde_json::to_string_pretty(&stories)?;
     tokio::fs::write(&filename, json).await?;
@@ -274,8 +277,9 @@ async fn main() -> Result<()> {
             rating_id,
             word_count,
             time_range,
+            num_pages,
         } => {
-            handle_fetch_stories_by_series(site, medium_name, series_name, sortby_id, rating_id, word_count, time_range, &client).await?;
+            handle_fetch_stories_by_series(site, medium_name, series_name, sortby_id, rating_id, word_count, time_range, num_pages, &client).await?;
         }
          Commands::FetchStories {
             site,

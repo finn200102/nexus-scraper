@@ -34,6 +34,7 @@ pub trait Site {
         rating_id: u32,
         word_count: u32,
         time_range: u32,
+        num_pages: u32,
         client: &reqwest::Client,
     ) -> Result<Stories>;
 

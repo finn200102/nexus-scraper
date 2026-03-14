@@ -155,6 +155,7 @@ impl Site for RoyalroadSite{
             publish_date: None,
             updated_date: None,
             status: None,
+            chapter_count: None,
 
         })
     }

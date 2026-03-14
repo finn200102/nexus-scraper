@@ -84,6 +84,7 @@ impl Site for ArchiveSite{
         _rating_id: u32,
         _word_count: u32,
         _time_range: u32,
+        _num_pages: u32,
         client: &reqwest::Client,
         ) -> Result<Stories> {
         Err(CoreError::UnsupportedOperation(
