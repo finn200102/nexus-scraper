@@ -1,3 +1,8 @@
 /target
-*.html
 *.json
+/chapter*.html
+/chapters*.json
+/author*.json
+/story.json
+/stories*.json
+!nexus-core/tests/fixtures/**/*.html

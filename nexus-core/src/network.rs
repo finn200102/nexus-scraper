@@ -129,3 +129,117 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
     Ok(html)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_site_fanfiction() {
+        let url = "https://www.fanfiction.net/s/1234567";
+        let result = detect_site_from_url(url).unwrap();
+        assert_eq!(result, "fanfiction");
+    }
+
+    #[test]
+    fn test_detect_site_archive() {
+        let url = "https://archiveofourown.org/works/123456";
+        let result = detect_site_from_url(url).unwrap();
+        assert_eq!(result, "archive");
+    }
+
+    #[test]
+    fn test_detect_site_royalroad() {
+        let url = "https://www.royalroad.com/fiction/12345";
+        let result = detect_site_from_url(url).unwrap();
+        assert_eq!(result, "royalroad");
+    }
+
+    #[test]
+    fn test_detect_site_spacebattles() {
+        let url = "https://forums.spacebattles.com/threads/123456";
+        let result = detect_site_from_url(url).unwrap();
+        assert_eq!(result, "spacebattles");
+    }
+
+    #[test]
+    fn test_detect_site_webnovel() {
+        let url = "https://www.webnovel.com/book/story_12345";
+        let result = detect_site_from_url(url).unwrap();
+        assert_eq!(result, "webnovel");
+    }
+
+    #[test]
+    fn test_detect_site_case_insensitive() {
+        let url = "https://WWW.FANFICTION.NET/s/1234567";
+        let result = detect_site_from_url(url).unwrap();
+        assert_eq!(result, "fanfiction");
+    }
+
+    #[test]
+    fn test_detect_site_invalid() {
+        let url = "https://unknown-site.com/story/123";
+        let result = detect_site_from_url(url);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_date_iso() {
+        let result = parse_date("2024-01-15").unwrap();
+        assert_eq!(result, "2024-01-15");
+    }
+
+    #[test]
+    fn test_parse_date_fanfiction() {
+        let result = parse_date("05-Jun-2012").unwrap();
+        assert_eq!(result, "2012-06-05");
+    }
+
+    #[test]
+    fn test_parse_date_royalroad_short() {
+        let result = parse_date("Sep 02, 2010").unwrap();
+        assert_eq!(result, "2010-09-02");
+    }
+
+    #[test]
+    fn test_parse_date_royalroad_long() {
+        let result = parse_date("January 15, 2024").unwrap();
+        assert_eq!(result, "2024-01-15");
+    }
+
+    #[test]
+    fn test_parse_date_different_order() {
+        let result = parse_date("15 January 2024").unwrap();
+        assert_eq!(result, "2024-01-15");
+    }
+
+    #[test]
+    fn test_parse_date_slash_format() {
+        let result = parse_date("2024/01/15").unwrap();
+        assert_eq!(result, "2024-01-15");
+    }
+
+    #[test]
+    fn test_parse_date_already_normalized() {
+        let result = parse_date("2024-01-15").unwrap();
+        assert_eq!(result, "2024-01-15");
+    }
+
+    #[test]
+    fn test_parse_date_empty() {
+        let result = parse_date("");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_date_whitespace() {
+        let result = parse_date("  2024-01-15  ");
+        assert_eq!(result, Some("2024-01-15".to_string()));
+    }
+
+    #[test]
+    fn test_parse_date_invalid() {
+        let result = parse_date("not-a-date");
+        assert!(result.is_none());
+    }
+}
+
