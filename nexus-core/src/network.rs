@@ -58,12 +58,24 @@ pub fn parse_date(date_str: &str) -> Option<String> {
 }
 
 
-#[derive(Serialize)]
-struct ProxyRequest {
+#[derive(Serialize, Default)]
+struct ProxyOptions {
     cmd: String,
     url: String,
     session: String,
-    max_timeout: u32,
+    #[serde(rename = "maxTimeout", skip_serializing_if = "Option::is_none")]
+    max_timeout: Option<u32>,
+    #[serde(rename = "returnRaw", skip_serializing_if = "Option::is_none")]
+    return_raw: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    browser: Option<BrowserConfig>,
+}
+
+#[derive(Serialize, Default)]
+struct BrowserConfig {
+    platform: String,
+    browser: String,
+    device: String,
 }
 
 #[derive(Deserialize)]
@@ -72,17 +84,38 @@ struct ProxyResponse {
 }
 
 pub async fn fetch_via_proxy(url: &str, client: &Client) -> Result<String> {
+    fetch_via_proxy_with_options(url, client, None).await
+}
+
+pub async fn fetch_via_proxy_browser(url: &str, client: &Client) -> Result<String> {
+    let browser_config = Some(BrowserConfig {
+        platform: "windows".to_string(),
+        browser: "chrome".to_string(),
+        device: "desktop".to_string(),
+    });
+    fetch_via_proxy_with_options(url, client, browser_config).await
+}
+
+async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Option<BrowserConfig>) -> Result<String> {
     let proxy_url = std::env::var("FLARESOLVERR_URL")
         .unwrap_or_else(|_| "http://localhost:8191/v1".to_string());
-    let payload = ProxyRequest {
+    let session = format!("fiction_{}", std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis());
+
+    let mut payload = ProxyOptions {
         cmd: "request.get".to_string(),
         url: url.to_string(),
-        max_timeout: 60000,
-        session: "fiction".into(),
-        };
+        session,
+        max_timeout: Some(60000),
+        return_raw: Some(true),
+        browser,
+    };
 
     let res = client
         .post(proxy_url)
+        .header("Content-Type", "application/json")
         .json(&payload)
         .send()
         .await?

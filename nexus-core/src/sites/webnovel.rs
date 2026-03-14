@@ -15,12 +15,24 @@ impl Site for WebnovelSite {
 
     async fn fetch_chapter(
         &self,
-        _story_id: u64,
-        _chapter_id: u64,
-        _chapter_number: u32,
-        _client: &reqwest::Client,
+        story_id: u64,
+        chapter_id: u64,
+        chapter_number: u32,
+        client: &reqwest::Client,
     ) -> Result<Chapter> {
-        Err(CoreError::UnsupportedOperation("fetch_chapter not supported for webnovel".into()))
+        let url = format!("https://www.webnovel.com/book/{}_{}/chapter_{}", story_id, story_id, chapter_id);
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
+        
+        let title = webnovel::parse_chapter_title(&html);
+        let text = webnovel::parse_chapter_content(&html);
+        
+        Ok(Chapter {
+            site: self.name().to_string(),
+            title,
+            text,
+            chapter_number: Some(chapter_number),
+            chapter_id: Some(chapter_id),
+        })
     }
 
     async fn fetch_author_stories(
@@ -52,7 +64,7 @@ impl Site for WebnovelSite {
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
         let url = format!("https://www.webnovel.com/book/{}/catalog", story_id);
-        let html = network::fetch_via_proxy(&url, client).await?;
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
         let chapters = webnovel::parse_catalog(&html);
         Ok(chapters)
     }
@@ -79,7 +91,7 @@ impl Site for WebnovelSite {
         url: &str,
         client: &reqwest::Client,
     ) -> Result<Story> {
-        let html = network::fetch_via_proxy(url, client).await?;
+        let html = network::fetch_via_proxy_browser(url, client).await?;
 
         let story_name = webnovel::parse_story_name(&html);
         let img_url = webnovel::parse_cover(&html);

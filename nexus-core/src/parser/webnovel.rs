@@ -189,6 +189,33 @@ pub fn parse_reviews(html: &str) -> Option<u64> {
         .and_then(|s| s.parse::<u64>().ok())
 }
 
+pub fn parse_chapter_title(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("div.cha-tit h1").ok()?;
+
+    document
+        .select(&selector)
+        .next()
+        .map(|el| el.text().collect::<String>())
+        .map(|s| s.trim().to_string())
+}
+
+pub fn parse_chapter_content(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("div.cha-content div.j_paragraph p").ok()?;
+
+    let paragraphs: Vec<String> = document
+        .select(&selector)
+        .map(|el| el.text().collect::<String>())
+        .collect();
+
+    if paragraphs.is_empty() {
+        None
+    } else {
+        Some(paragraphs.join("\n\n"))
+    }
+}
+
 fn parse_number(text: &str) -> Option<u64> {
     let text = text.trim();
 
