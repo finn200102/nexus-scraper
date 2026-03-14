@@ -121,6 +121,7 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
             story_name: Some(title),
             author_name: Some(author_name.to_string()),
             story_id: Some(story_id),
+            url: Some(format!("https://archiveofourown.org/works/{}", story_id)),
             ..Default::default()
         });
     }

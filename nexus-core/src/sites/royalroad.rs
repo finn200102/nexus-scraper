@@ -156,6 +156,7 @@ impl Site for RoyalroadSite{
             updated_date: None,
             status: None,
             chapter_count: None,
+            url: Some(format!("https://www.royalroad.com/fiction/{}", story_id)),
 
         })
     }

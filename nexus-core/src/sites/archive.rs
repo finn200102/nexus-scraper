@@ -158,6 +158,8 @@ impl Site for ArchiveSite{
             updated_date: updated_date,
             status: status,
             views: views,
+            chapter_count: None,
+            url: Some(format!("https://archiveofourown.org/works/{}", story_id)),
             ..Default::default()
         })
 

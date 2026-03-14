@@ -29,6 +29,7 @@ pub struct Story {
     pub views: Option<u64>,
     pub rating: Option<f64>,
     pub chapter_count: Option<u64>,
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Serialize, Default)]

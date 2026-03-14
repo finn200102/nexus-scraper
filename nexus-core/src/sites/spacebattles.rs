@@ -166,6 +166,7 @@ impl Site for SpacebattlesSite {
             genre: vec![],
             publish_date: publish_date,
             status: status,
+            url: Some(format!("https://forums.spacebattles.com/threads/{}/", story_id)),
             ..Default::default()
 
         })

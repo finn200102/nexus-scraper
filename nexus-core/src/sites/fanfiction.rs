@@ -186,6 +186,7 @@ impl Site for FanFictionSite {
             views: None,
             rating: None,
             chapter_count: None,
+            url: Some(format!("https://www.fanfiction.net/s/{}/", story_id)),
 
         })
     }

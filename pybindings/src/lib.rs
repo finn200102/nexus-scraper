@@ -58,6 +58,8 @@ struct PyStory {
     rating: f64,
     #[pyo3(get)]
     chapter_count: u64,
+    #[pyo3(get)]
+    url: String,
 }
 
 #[pyclass]
@@ -119,6 +121,7 @@ impl PySite {
                             views: story.views.unwrap_or_default(),
                             rating: story.rating.unwrap_or_default(),
                             chapter_count: story.chapter_count.unwrap_or_default(),
+                            url: story.url.unwrap_or_default(),
                             chapters: story.chapters
                                 .into_iter()
                                 .map(|chap| PyChapter {
@@ -228,6 +231,7 @@ impl PySite {
                                 views: s.views.unwrap_or_default(),
                                 rating: s.rating.unwrap_or_default(),
                                 chapter_count: s.chapter_count.unwrap_or_default(),
+                                url: s.url.unwrap_or_default(),
                                 chapters: vec![],
                             })
                             .collect(),

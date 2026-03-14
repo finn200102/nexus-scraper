@@ -140,6 +140,10 @@ pub fn parse_spacebattles_stories(html: &str) -> Vec<Story> {
             author_name: Some(author_slug),
             author_id: Some(author_id),
             story_id: Some(story_id),
+            url: Some(format!(
+                "https://forums.spacebattles.com/threads/{}/",
+                story_id
+            )),
             ..Default::default()
         });
     }

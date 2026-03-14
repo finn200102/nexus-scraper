@@ -359,6 +359,7 @@ pub fn parse_fanfiction_stories_by_series(html: &str) -> Stories {
             updated_date: updated_date,
             status: status,
             chapter_count: chapters,
+            url: Some(format!("https://www.fanfiction.net/s/{}/", story_id)),
             ..Default::default()
         });
     }
