@@ -76,16 +76,17 @@ impl Site for RoyalroadSite{
 
     async fn fetch_stories_by_series(
         &self,
-        medium_name: String,
-        series_name: &str,
-        sortby_id: u32,
-        rating_id: u32,
-        word_count: u32,
-        time_range: u32,
+        _medium_name: String,
+        _series_name: &str,
+        _sortby_id: u32,
+        _rating_id: u32,
+        _word_count: u32,
+        _time_range: u32,
+        _num_pages: u32,
         client: &reqwest::Client,
     ) -> Result<Stories> {
           Err(CoreError::UnsupportedOperation(
-            "fetch_author_stories not supported for spacebattles".into(),
+            "fetch_stories_by_series not supported for royalroad".into(),
         ))
    }
 
