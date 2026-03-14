@@ -1,20 +1,21 @@
+use crate::models::{Author, Chapter, Stories, Story};
 use scraper::{Html, Selector};
-use crate::models::{Chapter, Story, Stories, Author};
 
 pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
-
     let document = Html::parse_document(html);
     let selector = Selector::parse(r#"div#chapters > div > div[role="article"]"#).unwrap();
     let chapter_number_selector = Selector::parse("div#chapters > div").unwrap();
 
-    let chapter_number = document.select(&chapter_number_selector)
+    let chapter_number = document
+        .select(&chapter_number_selector)
         .next()
         .and_then(|e| e.value().attr("id"))
         .and_then(|id_str| id_str.split('-').last())
         .and_then(|number_str| number_str.parse::<u32>().ok())
         .unwrap_or(0);
-    
-    let text = document.select(&selector)
+
+    let text = document
+        .select(&selector)
         .next()
         .map(|div| div.text().collect::<Vec<_>>().join(" "))
         .unwrap_or_else(|| "Chapter not found".into());
@@ -28,7 +29,6 @@ pub fn parse_archive_chapter(html: &str, chapter_id: u64) -> Chapter {
     }
 }
 
-
 pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("div#main > ol > li").unwrap();
@@ -37,7 +37,7 @@ pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
 
     for chapter_element in document.select(&selector) {
         let chapter_selector = Selector::parse("a").unwrap();
-        
+
         let chapter_id = chapter_element
             .select(&chapter_selector)
             .next()
@@ -62,10 +62,10 @@ pub fn parse_description(html: &str) -> String {
     let description_selector = Selector::parse("div.summary > blockquote").unwrap();
 
     let description = document
-            .select(&description_selector)
-            .next()
-            .map(|div| div.text().collect::<Vec<_>>().join(" "))
-            .unwrap_or_else(|| "Description not found".into());
+        .select(&description_selector)
+        .next()
+        .map(|div| div.text().collect::<Vec<_>>().join(" "))
+        .unwrap_or_else(|| "Description not found".into());
     description
 }
 
@@ -75,7 +75,6 @@ pub fn parse_tags(html: &str) -> Vec<String> {
 
     // Select the a inside li inside ul in dd.freeform, .tags
     let selector = Selector::parse("dd.freeform ul li a, dd.tags ul li a").unwrap();
-
 
     let mut tags = Vec::new();
 
@@ -92,15 +91,7 @@ pub fn parse_tags(html: &str) -> Vec<String> {
     tags
 }
 
-
-
-
-
-
-
-
 pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
-
     let document = Html::parse_document(html);
 
     let story_selector = Selector::parse("div#main > ul > li").unwrap();
@@ -116,7 +107,6 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
             .next()
             .map(|a| a.text().collect::<Vec<_>>().join(" "))
             .unwrap_or_else(|| "Story title not found".into());
-            
 
         let story_id = story_element
             .select(&title_selector)
@@ -126,7 +116,6 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
             .and_then(|id_str| id_str.parse::<u64>().ok())
             .unwrap_or(0);
 
-
         stories.push(Story {
             site: "archive".to_string(),
             story_name: Some(title),
@@ -134,31 +123,118 @@ pub fn parse_archive_stories(html: &str, author_name: &str) -> Stories {
             story_id: Some(story_id),
             ..Default::default()
         });
+    }
+
+    Stories { stories }
 }
 
-    Stories {stories}
-
-
-}
-
-pub fn parse_author_from_story (html: &str) -> Author {
+pub fn parse_author_from_story(html: &str) -> Author {
     // parse author on story site to get name and id
     let document = Html::parse_document(html);
     let author_selector = Selector::parse("h3.heading > a").unwrap();
 
-    let author_name = document 
-            .select(&author_selector)
-            .next()
-            .and_then(|a| a.value().attr("href"))
-            .and_then(|part| {
-                let split: Vec<_> = part.split('/').collect();
-                let slug = split.last()?.to_string();
-                Some(slug)
-            })
-            .unwrap_or_else(|| "unknown-author".into());
+    let author_name = document
+        .select(&author_selector)
+        .next()
+        .and_then(|a| a.value().attr("href"))
+        .and_then(|part| {
+            let split: Vec<_> = part.split('/').collect();
+            let slug = split.last()?.to_string();
+            Some(slug)
+        })
+        .unwrap_or_else(|| "unknown-author".into());
 
     Author {
         author_name: Some(author_name),
         ..Default::default()
     }
+}
+
+pub fn parse_publish_date(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.published").ok()?;
+
+    document
+        .select(&selector)
+        .next()
+        .map(|dd| dd.text().collect::<String>())
+}
+
+pub fn parse_updated_date(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.status").ok()?;
+
+    document
+        .select(&selector)
+        .next()
+        .map(|dd| dd.text().collect::<String>())
+}
+
+pub fn parse_word_count(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.words").ok()?;
+
+    document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>()
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_reviews(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.comments").ok()?;
+
+    document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>()
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_favorites(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.kudos").ok()?;
+
+    document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>()
+        .replace(',', "")
+        .parse()
+        .ok()
+}
+
+pub fn parse_follows(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.bookmarks").ok()?;
+
+    let text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+
+    text.replace(',', "").parse().ok()
+}
+
+pub fn parse_views(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.hits").ok()?;
+
+    document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>()
+        .replace(',', "")
+        .parse()
+        .ok()
 }

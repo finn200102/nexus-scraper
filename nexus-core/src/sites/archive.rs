@@ -126,6 +126,17 @@ impl Site for ArchiveSite{
         let description = archive::parse_description(&html);
 
         let tags = archive::parse_tags(&html);
+        
+        let publish_date = archive::parse_publish_date(&html);
+        let updated_date = archive::parse_updated_date(&html);
+        let word_count = archive::parse_word_count(&html);
+        let reviews = archive::parse_reviews(&html);
+        let favorites = archive::parse_favorites(&html);
+        let follows = archive::parse_follows(&html);
+        let views = archive::parse_views(&html);
+
+        let status = word_count.map(|_| "Complete".to_string());
+
 
 
 
@@ -137,6 +148,15 @@ impl Site for ArchiveSite{
             site: "archive".to_string(),
             description: Some(description),
             tags: tags,
+            genre: vec![],
+            word_count: word_count,
+            reviews: reviews,
+            favorites: favorites,
+            follows: follows,
+            publish_date: publish_date,
+            updated_date: updated_date,
+            status: status,
+            views: views,
             ..Default::default()
         })
 
