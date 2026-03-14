@@ -102,15 +102,22 @@ impl Site for FanFictionSite {
         rating_id: u32,
         word_count: u32,
         time_range: u32,
+        num_pages: u32,
         client: &reqwest::Client,
     ) -> Result<Stories> {
-        let url = format!("https://www.fanfiction.net/{}/{}/?&srt={}&r={}&len={}&t={}", medium_name, series_name, sortby_id, rating_id, word_count, time_range);
+        let mut all_stories = Vec::new();
 
-        let html = network::fetch_via_proxy(&url, client).await?;
+        for page in 1..=num_pages.max(1) {
+            // URL format: https://www.fanfiction.net/{medium_name}/{series_name}/?srt={}&r={}&len={}&p={}
+            let url = format!("https://www.fanfiction.net/{}/{}/?srt={}&r={}&len={}&t={}&p={}", medium_name, series_name, sortby_id, rating_id, word_count, time_range, page);
 
-        let stories = fanfiction::parse_fanfiction_stories_by_series(&html);
+            let html = network::fetch_via_proxy(&url, client).await?;
 
-        Ok(stories)
+            let stories = fanfiction::parse_fanfiction_stories_by_series(&html);
+            all_stories.extend(stories.stories);
+        }
+
+        Ok(Stories { stories: all_stories })
     }
 
 
@@ -178,6 +185,7 @@ impl Site for FanFictionSite {
             status: status,
             views: None,
             rating: None,
+            chapter_count: None,
 
         })
     }
