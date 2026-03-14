@@ -180,26 +180,35 @@ Filter stories by series/category with advanced filters.
 
 ```sh
 cargo run -p nexus-cli -- fetch-stories-by-series \
-  --site royalroad \
-  --medium-name "fantasy" \
-  --series-name "Popular" \
+  --site fanfiction \
+  --medium-name "book" \
+  --series-name "Harry-Potter" \
   --sortby-id 4 \
   --rating-id 10 \
-  --word-count 1 \
-  --time-range 0
+  --word-count 40 \
+  --time-range 0 \
+  --num-pages 2
 ```
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--site` | string | required | Site identifier |
-| `--medium-name` | string | required | Content type (e.g., `fantasy`) |
-| `--series-name` | string | required | Series/filter name |
+| `--medium-name` | string | required | Content type (e.g., `book`, `crossover`) |
+| `--series-name` | string | required | Series/filter name (e.g., `Harry-Potter`, `popular`) |
 | `--sortby-id` | u32 | `4` | Sort order |
 | `--rating-id` | u32 | `10` | Rating filter |
 | `--word-count` | u32 | `1` | Minimum word count |
 | `--time-range` | u32 | `0` | Time range (days) |
+| `--num-pages` | u32 | `1` | Number of pages to fetch |
 
 **Output:** `stories_{series_name}.json`
+
+**Returns:** Each story includes:
+- `story_id`, `story_name`, `author_name`, `author_id`
+- `description`, `img_url`
+- `word_count`, `reviews`, `favorites`, `follows`
+- `publish_date`, `updated_date`, `status`
+- `chapter_count` (when available)
 
 ---
 
