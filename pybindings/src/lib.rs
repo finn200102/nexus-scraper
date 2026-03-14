@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 use nexus_core::sites::{get_site, Site as Site};
+use nexus_core::detect_site_from_url;
 use pyo3_asyncio::tokio::future_into_py;
 use std::sync::Arc;
 use reqwest::Client;
@@ -139,13 +140,6 @@ impl PySite {
         })
     }
 
-
-
-
-
-                        
-        
-
     fn fetch_chapter<'py>(
         &'py self,
         py: Python<'py>,
@@ -165,14 +159,12 @@ impl PySite {
                 Ok(Py::new(
                     py,
                     PyChapter {
-                        site: chapter.site,  // assuming this is always present
+                        site: chapter.site,
                         title: chapter.title.unwrap_or_default(),
                         text: chapter.text.unwrap_or_default(),
                         chapter_number: chapter.chapter_number.unwrap_or(0),
                         chapter_id: chapter.chapter_id.unwrap_or(0),
                     }
-
-          
                 )?
                 .into_py(py))
             })
@@ -243,13 +235,60 @@ impl PySite {
     }
 }
 
-use pyo3::prelude::*;
+#[pyfunction]
+fn fetch_story<'py>(py: Python<'py>, url: String) -> PyResult<&'py PyAny> {
+    future_into_py(py, async move {
+        let site_name = detect_site_from_url(&url).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        let site = get_site(site_name).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        let client = Client::new();
+        let story = site
+            .get_story_data_from_url(&url, &client)
+            .await
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        
+        Python::with_gil(|py| {
+            Ok(Py::new(
+                    py,
+                    PyStory {
+                        site: story.site,
+                        story_name: story.story_name.unwrap_or_default(),
+                        story_id: story.story_id.unwrap_or_default(),
+                        author_name: story.author_name.unwrap_or_default(),
+                        author_id: story.author_id.unwrap_or_default(),
+                        description: story.description.unwrap_or_default(),
+                        img_url: story.img_url.unwrap_or_default(),
+                        word_count: story.word_count.unwrap_or_default(),
+                        reviews: story.reviews.unwrap_or_default(),
+                        favorites: story.favorites.unwrap_or_default(),
+                        follows: story.follows.unwrap_or_default(),
+                        publish_date: story.publish_date.unwrap_or_default(),
+                        updated_date: story.updated_date.unwrap_or_default(),
+                        status: story.status.unwrap_or_default(),
+                        views: story.views.unwrap_or_default(),
+                        rating: story.rating.unwrap_or_default(),
+                        chapter_count: story.chapter_count.unwrap_or_default(),
+                        url: story.url.unwrap_or_default(),
+                        chapters: story.chapters
+                            .into_iter()
+                            .map(|chap| PyChapter {
+                                site: chap.site,
+                                title: chap.title.unwrap_or_default(),
+                                text: chap.text.unwrap_or_default(),
+                                chapter_number: chap.chapter_number.unwrap_or(0),
+                                chapter_id: chap.chapter_id.unwrap_or(0),
+                            })
+                            .collect(),
+                    }
+                            )?
+                            .into_py(py))
+        })
+    })
+}
 
 #[pymodule]
 fn pybindings(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PySite>()?;
     m.add_class::<PyStories>()?;
+    m.add_function(wrap_pyfunction!(fetch_story, m)?)?;
     Ok(())
 }
-
-

@@ -3,6 +3,24 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Result, CoreError};
 
 
+pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
+    let url_lower = url.to_lowercase();
+    if url_lower.contains("fanfiction.net") {
+        Ok("fanfiction")
+    } else if url_lower.contains("archiveofourown.org") {
+        Ok("archive")
+    } else if url_lower.contains("royalroad.com") {
+        Ok("royalroad")
+    } else if url_lower.contains("spacebattles.com") {
+        Ok("spacebattles")
+    } else {
+        Err(CoreError::InvalidUrl(
+            "Could not detect site from URL. Please specify site manually.\nKnown sites: fanfiction, archive, royalroad, spacebattles".into()
+        ))
+    }
+}
+
+
 #[derive(Serialize)]
 struct ProxyRequest {
     cmd: String,

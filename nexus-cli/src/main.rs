@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use nexus_core::error::Result;
 use nexus_core::sites::get_site;
+use nexus_core::detect_site_from_url;
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -62,8 +63,8 @@ enum Commands {
     },
 
     GetStoryDataFromUrl {
-        #[arg(long)]
-        site: String,
+        #[arg(long, required = false)]
+        site: Option<String>,
         #[arg(long)]
         url: String,
     },
@@ -199,11 +200,15 @@ async fn handle_fetch_stories_by_series(
 
 
 async fn handle_get_story_data_from_url(
-    site: String,
+    site: Option<String>,
     url: String,
     client: &reqwest::Client,
 ) -> Result<()> {
-    let site = get_site(&site)?;
+    let site_name = match site {
+        Some(s) => s,
+        None => detect_site_from_url(&url)?.to_string(),
+    };
+    let site = get_site(&site_name)?;
     let story = site.get_story_data_from_url(&url, &client).await?;
     let filename = format!("story.json");
     let json = serde_json::to_string_pretty(&story)?;
@@ -213,8 +218,9 @@ async fn handle_get_story_data_from_url(
 
 }
 
-
  
+
+
 async fn handle_fetch_stories(
     site: String,
     sortby_id: u32,
