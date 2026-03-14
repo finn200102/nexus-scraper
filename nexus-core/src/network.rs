@@ -14,9 +14,11 @@ pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
         Ok("royalroad")
     } else if url_lower.contains("spacebattles.com") {
         Ok("spacebattles")
+    } else if url_lower.contains("webnovel.com") {
+        Ok("webnovel")
     } else {
         Err(CoreError::InvalidUrl(
-            "Could not detect site from URL. Please specify site manually.\nKnown sites: fanfiction, archive, royalroad, spacebattles".into()
+            "Could not detect site from URL. Please specify site manually.\nKnown sites: fanfiction, archive, royalroad, spacebattles, webnovel".into()
         ))
     }
 }

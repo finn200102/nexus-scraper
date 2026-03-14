@@ -6,6 +6,7 @@ pub mod fanfiction;
 pub mod archive;
 pub mod spacebattles;
 pub mod royalroad;
+pub mod webnovel;
 #[async_trait::async_trait]
 pub trait Site {
     fn name(&self) -> &'static str;
@@ -84,6 +85,7 @@ pub fn get_site(name: &str) -> Result<Arc<dyn Site + Send + Sync>> {
         "archive" => Ok(Arc::new(archive::ArchiveSite)),
         "spacebattles" => Ok(Arc::new(spacebattles::SpacebattlesSite)),
         "royalroad" => Ok(Arc::new(royalroad::RoyalroadSite)),
+        "webnovel" => Ok(Arc::new(webnovel::WebnovelSite)),
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }
