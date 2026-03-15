@@ -504,14 +504,19 @@ pub fn parse_chapter_count(html: &str) -> Option<u64> {
         .text()
         .collect::<String>();
 
-    span_text
+    if let Some(count_str) = span_text
         .split("Chapters:")
-        .nth(1)?
-        .split_whitespace()
-        .next()?
-        .replace(',', "")
-        .parse()
-        .ok()
+        .nth(1)
+        .and_then(|s| s.split_whitespace().next())
+    {
+        return count_str.replace(',', "").parse().ok();
+    }
+
+    if span_text.contains("Words:") && span_text.contains("Status:") {
+        return Some(1);
+    }
+
+    None
 }
 
 pub fn parse_publish_date(html: &str) -> Option<String> {
