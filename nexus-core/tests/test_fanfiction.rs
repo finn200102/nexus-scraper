@@ -66,3 +66,10 @@ fn test_parse_status_complete() {
     let html = r#"<span class="xgray">Status:Complete - Words: 1000</span>"#;
     let _result = fanfiction::parse_status(html);
 }
+
+#[test]
+fn test_parse_chapter_count() {
+    let html = r#"<span class="xgray">Chapters: 18 - Words: 100,000</span>"#;
+    let result = fanfiction::parse_chapter_count(html);
+    assert_eq!(result, Some(18));
+}

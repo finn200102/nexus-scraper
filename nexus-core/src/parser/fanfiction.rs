@@ -1,5 +1,6 @@
 use crate::models::{Author, Chapter, Stories, Story};
 use crate::parse_date;
+use chrono::{TimeZone, Utc};
 use scraper::{Html, Selector};
 use std::collections::HashSet;
 
@@ -493,7 +494,7 @@ pub fn parse_follows(html: &str) -> Option<u64> {
         .ok()
 }
 
-pub fn parse_publish_date(html: &str) -> Option<String> {
+pub fn parse_chapter_count(html: &str) -> Option<u64> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("span.xgray").ok()?;
 
@@ -503,38 +504,80 @@ pub fn parse_publish_date(html: &str) -> Option<String> {
         .text()
         .collect::<String>();
 
-    let date_str = span_text
-        .split("Published:")
+    span_text
+        .split("Chapters:")
         .nth(1)?
-        .split('-')
+        .split_whitespace()
         .next()?
-        .trim()
-        .to_string();
+        .replace(',', "")
+        .parse()
+        .ok()
+}
 
-    parse_date(&date_str)
+pub fn parse_publish_date(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("span.xgray").ok()?;
+
+    for element in document.select(&selector) {
+        let text: String = element.text().collect();
+        if !text.contains("Published:") {
+            continue;
+        }
+
+        if let Some(timestamp_str) = element.value().attr("data-xutime") {
+            if let Ok(timestamp) = timestamp_str.parse::<i64>() {
+                if let Some(date) = Utc.timestamp_opt(timestamp, 0).single() {
+                    return Some(date.format("%Y-%m-%d").to_string());
+                }
+            }
+        }
+
+        let date_str = text
+            .split("Published:")
+            .nth(1)?
+            .split('-')
+            .next()?
+            .trim()
+            .to_string();
+
+        return parse_date(&date_str);
+    }
+
+    None
 }
 
 pub fn parse_updated_date(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("span.xgray").ok()?;
 
-    let span_text = document
-        .select(&selector)
-        .next()?
-        .text()
-        .collect::<String>();
+    for element in document.select(&selector) {
+        let text: String = element.text().collect();
+        if !text.contains("Updated:") {
+            continue;
+        }
 
-    let date_str = span_text
-        .split("Updated:")
-        .nth(1)?
-        .split("Published:")
-        .next()?
-        .trim()
-        .trim_end_matches('-')
-        .trim()
-        .to_string();
+        if let Some(timestamp_str) = element.value().attr("data-xutime") {
+            if let Ok(timestamp) = timestamp_str.parse::<i64>() {
+                if let Some(date) = Utc.timestamp_opt(timestamp, 0).single() {
+                    return Some(date.format("%Y-%m-%d").to_string());
+                }
+            }
+        }
 
-    parse_date(&date_str)
+        let date_str = text
+            .split("Updated:")
+            .nth(1)?
+            .split("Published:")
+            .next()?
+            .trim()
+            .trim_end_matches('-')
+            .trim()
+            .to_string();
+
+        return parse_date(&date_str);
+    }
+
+    None
 }
 
 pub fn parse_status(html: &str) -> Option<String> {

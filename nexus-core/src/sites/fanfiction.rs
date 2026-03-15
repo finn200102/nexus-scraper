@@ -168,6 +168,7 @@ impl Site for FanFictionSite {
         let publish_date = fanfiction::parse_publish_date(&html);
         let updated_date = fanfiction::parse_updated_date(&html);
         let status = fanfiction::parse_status(&html);
+        let chapter_count = fanfiction::parse_chapter_count(&html);
         
 
 
@@ -191,7 +192,7 @@ impl Site for FanFictionSite {
             status,
             views: None,
             rating: None,
-            chapter_count: None,
+            chapter_count,
             url: Some(format!("https://www.fanfiction.net/s/{story_id}/")),
 
         })
