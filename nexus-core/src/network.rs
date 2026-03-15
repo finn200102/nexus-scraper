@@ -1,7 +1,8 @@
-use reqwest::Client;
+use reqwest::{Client, header::USER_AGENT};
 use serde::{Deserialize, Serialize};
 use crate::error::{Result, CoreError};
 use chrono::NaiveDate;
+use tokio::time::{sleep, Duration};
 
 
 pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
@@ -71,7 +72,7 @@ struct ProxyOptions {
     browser: Option<BrowserConfig>,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Clone)]
 struct BrowserConfig {
     platform: String,
     browser: String,
@@ -101,29 +102,15 @@ pub async fn fetch_via_proxy_browser(url: &str, client: &Client) -> Result<Strin
 async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Option<BrowserConfig>) -> Result<String> {
     let proxy_url = std::env::var("FLARESOLVERR_URL")
         .unwrap_or_else(|_| "http://localhost:8191/v1".to_string());
-    let session = format!("fiction_{}", std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis());
 
-    let payload = ProxyOptions {
-        cmd: "request.get".to_string(),
-        url: url.to_string(),
-        session,
-        max_timeout: Some(60000),
-        return_raw: Some(true),
-        browser,
-    };
-
-    let res = client
-        .post(proxy_url)
-        .header("Content-Type", "application/json")
-        .json(&payload)
-        .send()
-        .await?
-        .json::<ProxyResponse>()
-        .await?;
-
+    match fetch_direct(url, client).await {
+        Ok(html) => return Ok(html),
+        Err(err) => {
+            if std::env::var("NEXUS_PROXY_DEBUG").is_ok() {
+                eprintln!("Direct fetch failed: {}", err);
+            }
+        }
+    }
     fn extract_html(value: &serde_json::Value) -> Option<String> {
         if let Some(s) = value.as_str() {
             return Some(s.to_string());
@@ -152,12 +139,8 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
         None
     }
 
-    let ProxyResponse { solution, status, message } = res;
-
-    let solution = solution.ok_or_else(|| CoreError::Parse("Missing solution from proxy".into()))?;
-
-    let html = extract_html(&solution).ok_or_else(|| {
-        let mut msg = String::from("Missing HTML in proxy response");
+    fn build_proxy_error(prefix: &str, status: &Option<String>, message: &Option<String>) -> CoreError {
+        let mut msg = prefix.to_string();
         if let Some(status) = status {
             msg.push_str(&format!(" (status: {})", status));
         }
@@ -165,7 +148,73 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
             msg.push_str(&format!(": {}", message));
         }
         CoreError::Parse(msg)
-    })?;
+    }
+
+    let mut last_error: Option<CoreError> = None;
+
+    for attempt in 0..3 {
+        let session = format!(
+            "fiction_{}_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis(),
+            attempt
+        );
+
+        let payload = ProxyOptions {
+            cmd: "request.get".to_string(),
+            url: url.to_string(),
+            session,
+            max_timeout: Some(90000),
+            return_raw: Some(true),
+            browser: browser.clone(),
+        };
+
+        let res = client
+            .post(&proxy_url)
+            .header("Content-Type", "application/json")
+            .json(&payload)
+            .send()
+            .await?
+            .json::<ProxyResponse>()
+            .await?;
+
+        let ProxyResponse { solution, status, message } = res;
+
+        let result = (|| {
+            let solution = solution.ok_or_else(|| build_proxy_error("Missing solution from proxy", &status, &message))?;
+
+            let html = extract_html(&solution)
+                .ok_or_else(|| build_proxy_error("Missing HTML in proxy response", &status, &message))?;
+
+            Ok(html)
+        })();
+
+        match result {
+            Ok(html) => return Ok(html),
+            Err(err) => {
+                if attempt == 2 || !matches!(err, CoreError::Parse(_)) {
+                    return Err(err);
+                }
+                last_error = Some(err);
+                sleep(Duration::from_secs(2)).await;
+            }
+        }
+    }
+
+    Err(last_error.unwrap_or_else(|| CoreError::Parse("Unknown proxy error".into())))
+}
+
+async fn fetch_direct(url: &str, client: &Client) -> Result<String> {
+    let html = client
+        .get(url)
+        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .send()
+        .await?
+        .error_for_status()?
+        .text()
+        .await?;
 
     Ok(html)
 }
