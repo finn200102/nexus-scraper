@@ -22,7 +22,7 @@ impl Site for RoyalroadSite{
     ) -> Result<Chapter> {
         let url = format!("https://www.royalroad.com/fiction/{story_id}/chapter/{chapter_id}");
 
-        let html = network::fetch_via_proxy(&url, client).await?;
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
 
         let chapter = royalroad::parse_chapter(&html, chapter_id);
 
@@ -38,7 +38,7 @@ impl Site for RoyalroadSite{
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
         let url = format!("https://www.royalroad.com/fiction/{story_id}");
-        let html = network::fetch_via_proxy(&url, client).await?;
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
         let chapters = royalroad::parse_chapters(&html);
 
         Ok(chapters)
@@ -56,7 +56,7 @@ impl Site for RoyalroadSite{
         for chapter in &mut chapters {
             if let Some(chapter_id) = chapter.chapter_id {
                 let url = format!("https://www.royalroad.com/fiction/{}/chapter/{}", story_id, chapter_id);
-                let html = network::fetch_via_proxy(&url, client).await?;
+                let html = network::fetch_via_proxy_browser(&url, client).await?;
                 let full_chapter = royalroad::parse_chapter(&html, chapter_id);
                 chapter.text = full_chapter.text;
             }
@@ -123,7 +123,7 @@ impl Site for RoyalroadSite{
         let chapters = self.fetch_chapters(story_id, client).await?;
        // Get html
         let url = format!("https://www.royalroad.com/fiction/{}", &story_id);
-        let html = network::fetch_via_proxy(&url, client).await?;
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
         let author_data = royalroad::parse_author_from_story(&html);
         let author_name = author_data.author_name; 
         let author_id = author_data.author_id;
@@ -175,7 +175,7 @@ impl Site for RoyalroadSite{
         client: &reqwest::Client,
     ) -> Result<Author> {
         let url = format!("https://www.royalroad.com/fiction/{}", &story_id);
-        let html = network::fetch_via_proxy(&url, client).await?;
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
         let author = royalroad::parse_author_from_story(&html);
 
         Ok(author)
