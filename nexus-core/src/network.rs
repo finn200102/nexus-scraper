@@ -81,6 +81,8 @@ struct BrowserConfig {
 #[derive(Deserialize)]
 struct ProxyResponse {
     solution: Option<serde_json::Value>,
+    status: Option<String>,
+    message: Option<String>,
 }
 
 pub async fn fetch_via_proxy(url: &str, client: &Client) -> Result<String> {
@@ -122,9 +124,48 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
         .json::<ProxyResponse>()
         .await?;
 
-    let html = res.solution
-        .and_then(|sol| sol.get("response").and_then(|r| r.as_str().map(String::from)))
-        .ok_or_else(|| CoreError::Parse("Missing HTML in proxy".into()))?;
+    fn extract_html(value: &serde_json::Value) -> Option<String> {
+        if let Some(s) = value.as_str() {
+            return Some(s.to_string());
+        }
+
+        if let Some(response) = value.get("response") {
+            if let Some(body) = response.get("body").and_then(|b| b.as_str()) {
+                return Some(body.to_string());
+            }
+            if let Some(content) = response.get("content").and_then(|c| c.as_str()) {
+                return Some(content.to_string());
+            }
+            if let Some(raw) = response.as_str() {
+                return Some(raw.to_string());
+            }
+        }
+
+        if let Some(page_content) = value.get("pageContent").and_then(|p| p.as_str()) {
+            return Some(page_content.to_string());
+        }
+
+        if let Some(html) = value.get("data").and_then(|d| d.as_str()) {
+            return Some(html.to_string());
+        }
+
+        None
+    }
+
+    let ProxyResponse { solution, status, message } = res;
+
+    let solution = solution.ok_or_else(|| CoreError::Parse("Missing solution from proxy".into()))?;
+
+    let html = extract_html(&solution).ok_or_else(|| {
+        let mut msg = String::from("Missing HTML in proxy response");
+        if let Some(status) = status {
+            msg.push_str(&format!(" (status: {})", status));
+        }
+        if let Some(message) = message {
+            msg.push_str(&format!(": {}", message));
+        }
+        CoreError::Parse(msg)
+    })?;
 
     Ok(html)
 }
@@ -242,4 +283,3 @@ mod tests {
         assert!(result.is_none());
     }
 }
-
