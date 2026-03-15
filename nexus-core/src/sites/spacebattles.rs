@@ -47,8 +47,12 @@ impl Site for SpacebattlesSite {
             all_chapters.extend(chapters);
         }
 
+        for chapter in all_chapters.iter_mut() {
+            if let Some(chapter_id) = chapter.chapter_id {
+                chapter.url = Some(format!("https://forums.spacebattles.com/posts/{chapter_id}"));
+            }
+        }
 
-        // add chapter number to chapter_number
         for (i, chapter) in all_chapters.iter_mut().enumerate() {
             chapter.chapter_number = Some((i as u32) + 1)
         }
