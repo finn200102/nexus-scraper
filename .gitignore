@@ -1,6 +1,7 @@
 /target
 *.json
 /chapter*.html
+*.html
 /chapters*.json
 /author*.json
 /story.json
