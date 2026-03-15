@@ -148,10 +148,28 @@ impl Site for FanFictionSite {
         let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
 
-        let chapters = self.fetch_chapters(story_id, client).await?;
-       // Get html
         let url = format!("https://www.fanfiction.net/s/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
+        
+        let mut chapters = fanfiction::parse_fanfiction_chapters(&html);
+        
+        if chapters.is_empty() {
+            chapters.push(Chapter {
+                site: "fanfiction".to_string(),
+                title: None,
+                text: None,
+                chapter_number: Some(1),
+                chapter_id: None,
+                url: Some(format!("https://www.fanfiction.net/s/{}/1", story_id)),
+            });
+        }
+        
+        for chapter in chapters.iter_mut() {
+            if let Some(chapter_number) = chapter.chapter_number {
+                chapter.url = Some(format!("https://www.fanfiction.net/s/{}/{}", story_id, chapter_number));
+            }
+        }
+        
         let author_data = fanfiction::parse_author_from_story(&html);
         let author_name = author_data.author_name; 
         let author_id = author_data.author_id;
