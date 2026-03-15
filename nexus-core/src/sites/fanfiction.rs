@@ -44,7 +44,13 @@ impl Site for FanFictionSite {
     ) -> Result<Vec<Chapter>> {
         let url = format!("https://www.fanfiction.net/s/{story_id}");
         let html = network::fetch_via_proxy(&url, client).await?;
-        let chapters = fanfiction::parse_fanfiction_chapters(&html);
+        let mut chapters = fanfiction::parse_fanfiction_chapters(&html);
+        
+        for chapter in chapters.iter_mut() {
+            if let Some(chapter_number) = chapter.chapter_number {
+                chapter.url = Some(format!("https://www.fanfiction.net/s/{story_id}/{chapter_number}"));
+            }
+        }
 
         Ok(chapters)
         

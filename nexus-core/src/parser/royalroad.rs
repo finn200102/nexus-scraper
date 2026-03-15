@@ -47,6 +47,7 @@ pub fn parse_chapters(html: &str) -> Vec<Chapter> {
                 text: None,
                 chapter_number: Some(rc.order),
                 chapter_id: Some(rc.id),
+                url: Some(rc.url),
             })
             .collect(),
         Err(_) => vec![],

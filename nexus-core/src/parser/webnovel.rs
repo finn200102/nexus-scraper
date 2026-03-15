@@ -268,6 +268,7 @@ pub fn parse_catalog(html: &str) -> Vec<Chapter> {
             chapter_number: Some(chapter_number),
             chapter_id,
             text: None,
+            url: href,
         });
     }
 

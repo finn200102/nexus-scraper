@@ -6,6 +6,7 @@ pub struct Chapter {
     pub text: Option<String>,
     pub chapter_number: Option<u32>,
     pub chapter_id: Option<u64>,
+    pub url: Option<String>,
 }
 #[derive(Debug, Serialize, Default)]
 pub struct Story {

@@ -32,6 +32,7 @@ impl Site for WebnovelSite {
             text,
             chapter_number: Some(chapter_number),
             chapter_id: Some(chapter_id),
+            url: Some(format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}")),
         })
     }
 

@@ -18,6 +18,8 @@ struct PyChapter {
     chapter_number: u32,
     #[pyo3(get)]
     chapter_id: u64,
+    #[pyo3(get)]
+    url: String,
 }
 
 #[pyclass]
@@ -131,6 +133,7 @@ impl PySite {
                                     text: chap.text.unwrap_or_default(),
                                     chapter_number: chap.chapter_number.unwrap_or(0),
                                     chapter_id: chap.chapter_id.unwrap_or(0),
+                                    url: chap.url.unwrap_or_default(),
                                 })
                                 .collect(),
                         }
@@ -164,6 +167,7 @@ impl PySite {
                         text: chapter.text.unwrap_or_default(),
                         chapter_number: chapter.chapter_number.unwrap_or(0),
                         chapter_id: chapter.chapter_id.unwrap_or(0),
+                        url: chapter.url.unwrap_or_default(),
                     }
                 )?
                 .into_py(py))
@@ -276,6 +280,7 @@ fn fetch_story<'py>(py: Python<'py>, url: String) -> PyResult<&'py PyAny> {
                                 text: chap.text.unwrap_or_default(),
                                 chapter_number: chap.chapter_number.unwrap_or(0),
                                 chapter_id: chap.chapter_id.unwrap_or(0),
+                                url: chap.url.unwrap_or_default(),
                             })
                             .collect(),
                     }
