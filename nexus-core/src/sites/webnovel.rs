@@ -101,7 +101,7 @@ impl Site for WebnovelSite {
         let author_id = author_data.as_ref().and_then(|a| a.author_id);
         let description = webnovel::parse_description(&html);
         let tags = webnovel::parse_tags(&html);
-        let chapter_count = webnovel::parse_chapter_count(&html);
+        let mut chapter_count = webnovel::parse_chapter_count(&html);
         let views = webnovel::parse_views(&html);
         let rating = webnovel::parse_rating(&html);
         let reviews = webnovel::parse_reviews(&html);
@@ -113,6 +113,10 @@ impl Site for WebnovelSite {
         } else {
             vec![]
         };
+
+        if chapter_count.is_none() {
+            chapter_count = Some(chapters.len() as u64);
+        }
 
         Ok(Story {
             site: self.name().to_string(),

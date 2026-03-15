@@ -107,15 +107,24 @@ pub fn parse_tags(html: &str) -> Vec<String> {
 pub fn parse_chapter_count(html: &str) -> Option<u64> {
     let document = Html::parse_document(html);
 
-    for strong in document.select(&Selector::parse("div.det-hd-detail strong").ok()?) {
+    let selector = Selector::parse("div.det-hd-detail strong").ok()?;
+    for strong in document.select(&selector) {
         let text = strong.text().collect::<String>();
-        if text.contains("Chapter") {
-            if let Some(span) = strong.select(&Selector::parse("span").ok()?).next() {
-                let span_text = span.text().collect::<String>();
-                return parse_number(&span_text);
+        if !text.to_lowercase().contains("chapter") {
+            continue;
+        }
+
+        if let Some(span) = strong.select(&Selector::parse("span").ok()?).next() {
+            if let Some(value) = parse_number(&span.text().collect::<String>()) {
+                return Some(value);
             }
         }
+
+        if let Some(value) = parse_number(&text) {
+            return Some(value);
+        }
     }
+
     None
 }
 
