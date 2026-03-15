@@ -524,10 +524,13 @@ pub fn parse_publish_date(html: &str) -> Option<String> {
             continue;
         }
 
-        if let Some(timestamp_str) = element.value().attr("data-xutime") {
-            if let Ok(timestamp) = timestamp_str.parse::<i64>() {
-                if let Some(date) = Utc.timestamp_opt(timestamp, 0).single() {
-                    return Some(date.format("%Y-%m-%d").to_string());
+        let nested_selector = Selector::parse("span[data-xutime]").ok()?;
+        for nested in element.select(&nested_selector) {
+            if let Some(timestamp_str) = nested.value().attr("data-xutime") {
+                if let Ok(timestamp) = timestamp_str.parse::<i64>() {
+                    if let Some(date) = Utc.timestamp_opt(timestamp, 0).single() {
+                        return Some(date.format("%Y-%m-%d").to_string());
+                    }
                 }
             }
         }
@@ -556,10 +559,13 @@ pub fn parse_updated_date(html: &str) -> Option<String> {
             continue;
         }
 
-        if let Some(timestamp_str) = element.value().attr("data-xutime") {
-            if let Ok(timestamp) = timestamp_str.parse::<i64>() {
-                if let Some(date) = Utc.timestamp_opt(timestamp, 0).single() {
-                    return Some(date.format("%Y-%m-%d").to_string());
+        let nested_selector = Selector::parse("span[data-xutime]").ok()?;
+        for nested in element.select(&nested_selector) {
+            if let Some(timestamp_str) = nested.value().attr("data-xutime") {
+                if let Ok(timestamp) = timestamp_str.parse::<i64>() {
+                    if let Some(date) = Utc.timestamp_opt(timestamp, 0).single() {
+                        return Some(date.format("%Y-%m-%d").to_string());
+                    }
                 }
             }
         }
