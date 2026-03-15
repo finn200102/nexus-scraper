@@ -73,3 +73,23 @@ fn test_parse_chapter_count() {
     let result = fanfiction::parse_chapter_count(html);
     assert_eq!(result, Some(18));
 }
+
+#[test]
+fn test_parse_fanfiction_chapter_layout() {
+    let html = r#"
+    <div id="storytext">
+        <p><strong>Chapter 1: Title</strong></p>
+        <p>First line<br>Second line</p>
+        <p>
+            Another paragraph with <em>formatting</em>.
+        </p>
+    </div>
+    "#;
+
+    let chapter = fanfiction::parse_fanfiction_chapter(html, 1);
+    let text = chapter.text.unwrap();
+    assert_eq!(
+        text,
+        "Chapter 1: Title\n\nFirst line\nSecond line\n\nAnother paragraph with formatting."
+    );
+}

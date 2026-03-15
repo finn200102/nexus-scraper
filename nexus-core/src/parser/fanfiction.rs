@@ -1,7 +1,8 @@
 use crate::models::{Author, Chapter, Stories, Story};
 use crate::parse_date;
 use chrono::{TimeZone, Utc};
-use scraper::{Html, Selector};
+use ego_tree::NodeRef;
+use scraper::{node::Node, ElementRef, Html, Selector};
 use std::collections::HashSet;
 
 pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
@@ -11,7 +12,7 @@ pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
     let text = document
         .select(&selector)
         .next()
-        .map(|div| div.text().collect::<Vec<_>>().join(" "))
+        .map(|div| format_story_text(div))
         .unwrap_or_else(|| "Chapter not found".into());
 
     Chapter {
@@ -20,6 +21,67 @@ pub fn parse_fanfiction_chapter(html: &str, chapter_number: u32) -> Chapter {
         chapter_number: Some(chapter_number),
         ..Default::default()
     }
+}
+
+fn format_story_text(div: ElementRef<'_>) -> String {
+    let paragraph_selector = Selector::parse("p").unwrap();
+    let mut paragraphs: Vec<String> = div
+        .select(&paragraph_selector)
+        .map(|p| collect_paragraph_text(&p))
+        .filter(|p| !p.is_empty())
+        .collect();
+
+    if paragraphs.is_empty() {
+        let mut buffer = String::new();
+        collect_children_text(&div, &mut buffer);
+        return normalize_paragraph(&buffer);
+    }
+
+    paragraphs.iter_mut().for_each(|p| {
+        let normalized = normalize_paragraph(p);
+        *p = normalized;
+    });
+
+    paragraphs.join("\n\n")
+}
+
+fn collect_paragraph_text(element: &ElementRef<'_>) -> String {
+    let mut buffer = String::new();
+    collect_children_text(element, &mut buffer);
+    buffer
+}
+
+fn collect_children_text(element: &ElementRef<'_>, buffer: &mut String) {
+    for child in element.children() {
+        collect_node_text(child, buffer);
+    }
+}
+
+fn collect_node_text(node: NodeRef<'_, Node>, buffer: &mut String) {
+    match node.value() {
+        Node::Text(text) => buffer.push_str(&text.text),
+        Node::Element(element) => {
+            if element.name() == "br" {
+                buffer.push('\n');
+                return;
+            }
+
+            for child in node.children() {
+                collect_node_text(child, buffer);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn normalize_paragraph(raw: &str) -> String {
+    let cleaned = raw.replace("\r", "");
+    cleaned
+        .lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 pub fn parse_fanfiction_chapters(html: &str) -> Vec<Chapter> {
