@@ -108,6 +108,12 @@ impl Site for WebnovelSite {
 
         let story_id = extract_story_id(url);
 
+        let chapters = if let Some(sid) = story_id {
+            self.fetch_chapters(sid, client).await?
+        } else {
+            vec![]
+        };
+
         Ok(Story {
             site: self.name().to_string(),
             story_id,
@@ -117,6 +123,7 @@ impl Site for WebnovelSite {
             author_name,
             description,
             tags,
+            chapters,
             chapter_count,
             views,
             rating,

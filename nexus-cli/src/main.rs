@@ -2,12 +2,16 @@ use clap::{Parser, Subcommand};
 use nexus_core::error::Result;
 use nexus_core::sites::get_site;
 use nexus_core::detect_site_from_url;
+use tracing::info;
 
 #[derive(Parser)]
 #[command(author, version, about)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    verbose: u8,
 }
 
 #[derive(Subcommand)]
@@ -130,7 +134,11 @@ async fn handle_fetch_chapters_content(
     client: &reqwest::Client,
     ) -> Result<()> {
     let site = get_site(&site)?;
+    info!("Fetching chapters content for story {}", story_id);
+    
     let chapters = site.fetch_chapters_content(story_id, &client).await?;
+    info!("Fetched {} chapters", chapters.len());
+    
     let filename = format!("chapters{}.json", story_id);
     let json = serde_json::to_string_pretty(&chapters)?;
     tokio::fs::write(&filename, json).await?;
@@ -208,8 +216,10 @@ async fn handle_get_story_data_from_url(
         Some(s) => s,
         None => detect_site_from_url(&url)?.to_string(),
     };
+    info!("Fetching story from {} using site: {}", url, site_name);
     let site = get_site(&site_name)?;
     let story = site.get_story_data_from_url(&url, &client).await?;
+    info!("Fetched story: {:?}", story.story_name);
     let filename = format!("story.json");
     let json = serde_json::to_string_pretty(&story)?;
     tokio::fs::write(&filename, json).await?;
@@ -244,6 +254,18 @@ async fn handle_fetch_stories(
 #[tokio::main]
 async fn main() -> Result<()> { 
     let args = Cli::parse();
+    
+    let log_level = match args.verbose {
+        0 => "info",
+        1 => "debug",
+        _ => "trace",
+    };
+    
+    tracing_subscriber::fmt()
+        .with_env_filter(format!("nexus_cli={},nexus_core={}", log_level, log_level))
+        .init();
+    
+    info!("Starting nexus-cli");
     
     let client = reqwest::Client::new();
 

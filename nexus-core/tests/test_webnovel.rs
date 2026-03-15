@@ -70,6 +70,8 @@ fn test_parse_catalog() {
     assert_eq!(first.site, "webnovel");
     assert!(first.chapter_number.is_some());
     assert!(first.chapter_id.is_some());
+    assert!(first.url.is_some());
+    assert!(first.url.as_ref().unwrap().starts_with("/book/"));
 }
 
 #[test]

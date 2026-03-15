@@ -50,11 +50,19 @@ impl Site for RoyalroadSite{
         &self,
         story_id: u64,
         client: &reqwest::Client,
-        ) -> Result<Vec<Chapter>> {
-         Err(CoreError::UnsupportedOperation(
-            "fetch_stories not supported for fanfiction".into(),
-        ))
+    ) -> Result<Vec<Chapter>> {
+        let mut chapters = self.fetch_chapters(story_id, client).await?;
         
+        for chapter in &mut chapters {
+            if let Some(chapter_id) = chapter.chapter_id {
+                let url = format!("https://www.royalroad.com/fiction/{}/chapter/{}", story_id, chapter_id);
+                let html = network::fetch_via_proxy(&url, client).await?;
+                let full_chapter = royalroad::parse_chapter(&html, chapter_id);
+                chapter.text = full_chapter.text;
+            }
+        }
+
+        Ok(chapters)
     }
 
 
