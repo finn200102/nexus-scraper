@@ -267,3 +267,45 @@ pub fn parse_overall_score(html: &str) -> Option<f64> {
     let score_str = data_content.split('/').next()?.trim();
     score_str.parse().ok()
 }
+
+pub fn parse_story_title(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("div.fic-title h1").ok()?;
+
+    document
+        .select(&selector)
+        .next()
+        .map(|el| el.text().collect::<String>())
+}
+
+pub fn parse_status(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+
+    // Try multiple selectors to find status
+    let selectors = [
+        "div.stats-content span",
+        "div.stats-content",
+        "span.label",
+        "h4",
+        ".fiction-info",
+    ];
+
+    for sel in selectors {
+        if let Ok(selector) = Selector::parse(sel) {
+            for element in document.select(&selector) {
+                let text = element.text().collect::<String>();
+                let text_lower = text.to_lowercase();
+                if text_lower.contains("ongoing") {
+                    return Some("Ongoing".to_string());
+                } else if text_lower.contains("completed") {
+                    return Some("Completed".to_string());
+                } else if text_lower.contains("hiatus") {
+                    return Some("Hiatus".to_string());
+                } else if text_lower.contains("canceled") || text_lower.contains("cancelled") {
+                    return Some("Canceled".to_string());
+                }
+            }
+        }
+    }
+    None
+}

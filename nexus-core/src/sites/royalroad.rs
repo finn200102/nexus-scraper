@@ -118,12 +118,12 @@ impl Site for RoyalroadSite{
         let split: Vec<_> = url.split('/').collect();
         let story_id = split.get(4).ok_or(CoreError::InvalidUrl("Story ID not found in URL".to_string()))?.parse::<u64>()
              .map_err(|_| CoreError::InvalidUrl("Failed to parse story id as number".to_string()))?;
-        let story_name = split.get(5).and_then(|s| s.split('?').next()).map(|s| s.to_string());
 
-        let chapters = self.fetch_chapters(story_id, client).await?;
-       // Get html
         let url = format!("https://www.royalroad.com/fiction/{}", &story_id);
         let html = network::fetch_via_proxy_browser(&url, client).await?;
+        
+        let story_name = royalroad::parse_story_title(&html);
+        let chapters = self.fetch_chapters(story_id, client).await?;
         let author_data = royalroad::parse_author_from_story(&html);
         let author_name = author_data.author_name; 
         let author_id = author_data.author_id;
@@ -139,6 +139,7 @@ impl Site for RoyalroadSite{
         let reviews = royalroad::parse_ratings(&html);
         let word_count = royalroad::parse_word_count_from_pages(&html);
         let rating = royalroad::parse_overall_score(&html);
+        let status = royalroad::parse_status(&html);
 
 
 
@@ -161,7 +162,7 @@ impl Site for RoyalroadSite{
             rating,
             publish_date: None,
             updated_date: None,
-            status: None,
+            status,
             chapter_count: None,
             url: Some(format!("https://www.royalroad.com/fiction/{story_id}")),
 
