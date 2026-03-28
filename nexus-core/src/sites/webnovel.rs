@@ -47,16 +47,33 @@ impl Site for WebnovelSite {
 
     async fn fetch_stories_by_series(
         &self,
-        _medium_name: String,
+        keywords: String,
         _series_name: &str,
         _sortby_id: u32,
         _rating_id: u32,
         _word_count: u32,
         _time_range: u32,
         _num_pages: u32,
-        _client: &reqwest::Client,
+        client: &reqwest::Client,
     ) -> Result<Stories> {
-        Err(CoreError::UnsupportedOperation("fetch_stories_by_series not supported for webnovel".into()))
+        // Map: medium_name -> keywords (search query)
+        // series_name -> type (fanfic, original, comics)
+        let type_param = match keywords.as_str() {
+            "fanfic" | "fanfic-anime-comics" => "fanfic",
+            "original" => "original", 
+            "comics" => "comics",
+            _ => "fanfic",
+        };
+        
+        let url = format!("https://www.webnovel.com/search?keywords={}&type={}", 
+            urlencoding::encode(&keywords), 
+            type_param
+        );
+        
+        let html = network::fetch_via_proxy_browser(&url, client).await?;
+        let stories = webnovel::parse_search_results(&html);
+        
+        Ok(stories)
     }
 
     async fn fetch_chapters(

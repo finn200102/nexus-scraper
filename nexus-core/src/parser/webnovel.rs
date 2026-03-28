@@ -295,3 +295,104 @@ pub fn extract_story_id_from_url(url: &str) -> Option<u64> {
     }
     None
 }
+
+pub fn parse_search_results(html: &str) -> crate::models::Stories {
+    use crate::models::Story;
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("li.pr.pb20.mb12").ok().unwrap();
+
+    let mut stories = Vec::new();
+
+    for li in document.select(&selector) {
+        // Extract story ID from data-bookid attribute on the anchor tag
+        let story_id = li
+            .select(&Selector::parse("a.g_thumb").ok().unwrap())
+            .next()
+            .and_then(|el| el.value().attr("data-bookid"))
+            .and_then(|s| s.parse::<u64>().ok());
+
+        // Extract story name from h3
+        let story_name = li
+            .select(&Selector::parse("h3.g_h3 a").ok().unwrap())
+            .next()
+            .map(|el| el.text().collect::<String>())
+            .map(|s| s.trim().to_string());
+
+        // Extract URL
+        let url = li
+            .select(&Selector::parse("h3.g_h3 a").ok().unwrap())
+            .next()
+            .and_then(|el| el.value().attr("href"))
+            .map(|s| format!("https://www.webnovel.com{}", s));
+
+        // Extract author name
+        let author_name = li
+            .select(&Selector::parse("p.g_tags + p + p a").ok().unwrap())
+            .next()
+            .map(|el| el.text().collect::<String>())
+            .map(|s| s.trim().to_string());
+
+        // Extract author ID from href like /profile/123456
+        let author_id = li
+            .select(&Selector::parse("p.g_tags + p + p a").ok().unwrap())
+            .next()
+            .and_then(|el| el.value().attr("href"))
+            .and_then(|href| href.split('/').last())
+            .and_then(|s| s.parse::<u64>().ok());
+
+        // Extract description
+        let description = li
+            .select(&Selector::parse("p.fs16.c_000").ok().unwrap())
+            .next()
+            .map(|el| el.text().collect::<String>())
+            .map(|s| s.trim().to_string());
+
+        // Extract tags
+        let tags: Vec<String> = li
+            .select(&Selector::parse("p.g_tags a").ok().unwrap())
+            .map(|el| el.text().collect::<String>())
+            .collect();
+
+        // Extract cover image
+        let img_url = li
+            .select(&Selector::parse("a.g_thumb img").ok().unwrap())
+            .next()
+            .and_then(|el| el.value().attr("src"))
+            .map(|s| {
+                if s.starts_with("//") {
+                    format!("https:{}", s)
+                } else {
+                    s.to_string()
+                }
+            });
+
+        // Extract rating
+        let rating = li
+            .select(&Selector::parse("p.g_star_num small").ok().unwrap())
+            .next()
+            .map(|el| el.text().collect::<String>())
+            .and_then(|s| s.trim().parse::<f64>().ok());
+
+        // Chapter count - not available in search results
+        let chapter_count = None;
+
+        let story = Story {
+            site: "webnovel".to_string(),
+            story_id,
+            story_name,
+            author_id,
+            author_name,
+            description,
+            img_url,
+            tags,
+            chapter_count,
+            url,
+            rating,
+            ..Default::default()
+        };
+
+        stories.push(story);
+    }
+
+    crate::models::Stories { stories }
+}
