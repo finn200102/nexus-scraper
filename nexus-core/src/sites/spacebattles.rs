@@ -151,6 +151,7 @@ impl Site for SpacebattlesSite {
         .map_err(|e| CoreError::Parse(format!("Failed to parse story_id '{story_id}': {e}")))?;
 
         let chapters = self.fetch_chapters(story_id, client).await?;
+        let chapter_count = chapters.len() as u64;
         // Get html
         let url = format!("https://forums.spacebattles.com/threads/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
@@ -179,6 +180,7 @@ impl Site for SpacebattlesSite {
             publish_date,
             status,
             url: Some(format!("https://forums.spacebattles.com/threads/{story_id}/")),
+            chapter_count: Some(chapter_count),
             ..Default::default()
 
         })
