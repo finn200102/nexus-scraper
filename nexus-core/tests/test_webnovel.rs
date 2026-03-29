@@ -97,3 +97,52 @@ fn test_extract_story_id_from_url() {
     let result = webnovel::extract_story_id_from_url(url);
     assert_eq!(result, Some(11766562205519505));
 }
+
+#[test]
+fn test_parse_chapter_list_api() {
+    let json = include_str!("fixtures/webnovel/chapter_list_api.json");
+    let result = webnovel::parse_chapter_list_api(json);
+    assert_eq!(result.len(), 3);
+
+    let first = result.first().unwrap();
+    assert_eq!(first.site, "webnovel");
+    assert_eq!(first.chapter_id, Some(31586142793028464));
+    assert_eq!(
+        first.title,
+        Some("The Beginning of the End. Part 1/2".to_string())
+    );
+    assert_eq!(first.chapter_number, Some(1));
+
+    let second = result.get(1).unwrap();
+    assert_eq!(second.chapter_id, Some(31587736511109142));
+    assert_eq!(second.chapter_number, Some(2));
+
+    let third = result.get(2).unwrap();
+    assert_eq!(third.chapter_id, Some(31591153677686381));
+    assert_eq!(third.chapter_number, Some(3));
+}
+
+#[test]
+fn test_has_more_chapters_true() {
+    let json = include_str!("fixtures/webnovel/chapter_list_api.json");
+    assert!(webnovel::has_more_chapters(json));
+}
+
+#[test]
+fn test_parse_chapter_list_api_empty_response() {
+    let json = r#"{"code": 0, "msg": "Success", "data": {"volumeItems": []}}"#;
+    let result = webnovel::parse_chapter_list_api(json);
+    assert!(result.is_empty());
+}
+
+#[test]
+fn test_has_more_chapters_false() {
+    let json = r#"{"code": 0, "msg": "Success", "data": {"volumeItems": []}}"#;
+    assert!(!webnovel::has_more_chapters(json));
+}
+
+#[test]
+fn test_has_more_chapters_invalid_json() {
+    let json = "not valid json";
+    assert!(!webnovel::has_more_chapters(json));
+}

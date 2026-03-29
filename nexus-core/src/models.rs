@@ -1,5 +1,5 @@
 use serde::Serialize;
-#[derive(Debug, Serialize, Default)]
+#[derive(Debug, Serialize, Default, Clone)]
 pub struct Chapter {
     pub site: String,
     pub title: Option<String>,

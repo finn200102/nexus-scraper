@@ -396,3 +396,94 @@ pub fn parse_search_results(html: &str) -> crate::models::Stories {
 
     crate::models::Stories { stories }
 }
+
+#[derive(Debug, serde::Deserialize)]
+struct ApiVolumeItem {
+    #[serde(rename = "volumeName", default)]
+    volume_name: Option<String>,
+    #[serde(rename = "chapterItems", default)]
+    chapter_items: Vec<ApiChapterItem>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ApiChapterItem {
+    #[serde(rename = "id", default)]
+    id: Option<u64>,
+    #[serde(rename = "chapterName", default)]
+    chapter_name: Option<String>,
+    #[serde(rename = "chapterLevel", default)]
+    chapter_level: Option<u32>,
+    #[serde(rename = "index", default)]
+    index: Option<u32>,
+    #[serde(rename = "chapterIndex", default)]
+    chapter_index: Option<u32>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ChapterListResponse {
+    #[serde(rename = "code", default)]
+    code: Option<i32>,
+    #[serde(rename = "msg", default)]
+    msg: Option<String>,
+    #[serde(rename = "data", default)]
+    data: Option<ChapterListData>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ChapterListData {
+    #[serde(rename = "volumeItems", default)]
+    volume_items: Vec<ApiVolumeItem>,
+}
+
+pub fn parse_chapter_list_api(json: &str) -> Vec<Chapter> {
+    let response: ChapterListResponse = match serde_json::from_str(json) {
+        Ok(r) => r,
+        Err(_) => return vec![],
+    };
+
+    let data = match response.data {
+        Some(d) => d,
+        None => return vec![],
+    };
+
+    let mut chapters = Vec::new();
+    let mut global_chapter_number: u32 = 1;
+
+    for volume in data.volume_items {
+        for chapter_item in volume.chapter_items {
+            if chapter_item.chapter_level.unwrap_or(0) > 0 {
+                continue;
+            }
+
+            let chapter_id = chapter_item
+                .id
+                .or_else(|| chapter_item.chapter_index.map(|i| i as u64));
+
+            let chapter_number = global_chapter_number;
+            global_chapter_number += 1;
+
+            chapters.push(Chapter {
+                site: "webnovel".to_string(),
+                title: chapter_item.chapter_name,
+                chapter_number: Some(chapter_number),
+                chapter_id,
+                text: None,
+                url: None,
+            });
+        }
+    }
+
+    chapters
+}
+
+pub fn has_more_chapters(json: &str) -> bool {
+    let response: ChapterListResponse = match serde_json::from_str(json) {
+        Ok(r) => r,
+        Err(_) => return false,
+    };
+
+    match response.data {
+        Some(data) => !data.volume_items.is_empty(),
+        None => false,
+    }
+}

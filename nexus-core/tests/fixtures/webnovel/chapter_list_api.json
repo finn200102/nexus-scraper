@@ -1,0 +1,31 @@
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "volumeItems": [
+      {
+        "volumeName": "Volume 1 : Endless Path : The First Step",
+        "chapterItems": [
+          {
+            "id": 31586142793028464,
+            "chapterName": "The Beginning of the End. Part 1/2",
+            "chapterLevel": 0,
+            "chapterIndex": 1
+          },
+          {
+            "id": 31587736511109142,
+            "chapterName": "The Beginning of the End. Part 2/2",
+            "chapterLevel": 0,
+            "chapterIndex": 2
+          },
+          {
+            "id": 31591153677686381,
+            "chapterName": "Meeting the Goddess Klyscha",
+            "chapterLevel": 0,
+            "chapterIndex": 3
+          }
+        ]
+      }
+    ]
+  }
+}

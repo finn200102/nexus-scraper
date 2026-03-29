@@ -7,6 +7,36 @@ use crate::parser::webnovel;
 
 pub struct WebnovelSite;
 
+async fn fetch_chapters_via_api(
+    story_id: u64,
+    client: &reqwest::Client,
+) -> Result<Vec<Chapter>> {
+    let csrf_token = network::fetch_webnovel_csrf_token(client).await?;
+
+    let mut all_chapters = Vec::new();
+    let mut page_index: u32 = 0;
+
+    loop {
+        let json = network::fetch_webnovel_chapter_list(story_id, page_index, &csrf_token, client).await?;
+
+        let chapters = webnovel::parse_chapter_list_api(&json);
+
+        if chapters.is_empty() {
+            break;
+        }
+
+        all_chapters.extend(chapters);
+
+        if !webnovel::has_more_chapters(&json) {
+            break;
+        }
+
+        page_index += 1;
+    }
+
+    Ok(all_chapters)
+}
+
 #[async_trait::async_trait]
 impl Site for WebnovelSite {
     fn name(&self) -> &'static str {
@@ -56,8 +86,6 @@ impl Site for WebnovelSite {
         _num_pages: u32,
         client: &reqwest::Client,
     ) -> Result<Stories> {
-        // Map: medium_name -> keywords (search query)
-        // series_name -> type (fanfic, original, comics)
         let type_param = match keywords.as_str() {
             "fanfic" | "fanfic-anime-comics" => "fanfic",
             "original" => "original", 
@@ -81,18 +109,37 @@ impl Site for WebnovelSite {
         story_id: u64,
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        let url = format!("https://www.webnovel.com/book/{story_id}/catalog");
-        let html = network::fetch_via_proxy_browser(&url, client).await?;
-        let chapters = webnovel::parse_catalog(&html);
-        Ok(chapters)
+        match fetch_chapters_via_api(story_id, client).await {
+            Ok(chapters) if !chapters.is_empty() => Ok(chapters),
+            _ => {
+                let url = format!("https://www.webnovel.com/book/{story_id}/catalog");
+                let html = network::fetch_via_proxy_browser(&url, client).await?;
+                let chapters = webnovel::parse_catalog(&html);
+                Ok(chapters)
+            }
+        }
     }
 
     async fn fetch_chapters_content(
         &self,
-        _story_id: u64,
-        _client: &reqwest::Client,
+        story_id: u64,
+        client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
-        Err(CoreError::UnsupportedOperation("fetch_chapters_content not supported for webnovel".into()))
+        let mut chapters = self.fetch_chapters(story_id, client).await?;
+
+        for i in 0..chapters.len() {
+            let ch_id = chapters[i].chapter_id;
+            let c_num = chapters[i].chapter_number;
+
+            if let (Some(chapter_id), Some(chapter_number)) = (ch_id, c_num) {
+                if let Ok(full_chapter) = self.fetch_chapter(story_id, chapter_id, chapter_number, client).await {
+                    chapters[i].text = full_chapter.text;
+                    chapters[i].url = full_chapter.url;
+                }
+            }
+        }
+
+        Ok(chapters)
     }
 
     async fn fetch_stories(

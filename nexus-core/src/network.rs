@@ -219,6 +219,75 @@ async fn fetch_direct(url: &str, client: &Client) -> Result<String> {
     Ok(html)
 }
 
+pub async fn fetch_webnovel_csrf_token(_client: &Client) -> Result<String> {
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| CoreError::Parse(format!("Failed to build client: {}", e)))?;
+
+    let response = client
+        .get("https://www.webnovel.com")
+        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .send()
+        .await?
+        .error_for_status()?;
+
+    let cookies = response.headers().get("set-cookie");
+    if let Some(cookie_header) = cookies {
+        let cookie_str = cookie_header.to_str().unwrap_or("");
+        let re = regex::Regex::new(r#"_csrfToken=([^;]+)"#).map_err(|_| CoreError::Parse("Failed to compile CSRF regex".into()))?;
+        if let Some(caps) = re.captures(cookie_str) {
+            if let Some(token) = caps.get(1) {
+                return Ok(token.as_str().to_string());
+            }
+        }
+    }
+
+    let html = response.text().await?;
+
+    let re = regex::Regex::new(r#"_csrfToken\s*=\s*([^;"']+)"#).map_err(|_| CoreError::Parse("Failed to compile CSRF regex".into()))?;
+    if let Some(caps) = re.captures(&html) {
+        if let Some(token) = caps.get(1) {
+            return Ok(token.as_str().to_string());
+        }
+    }
+
+    Err(CoreError::Parse("Could not find _csrfToken".into()))
+}
+
+pub async fn fetch_webnovel_chapter_list(
+    book_id: u64,
+    page_index: u32,
+    csrf_token: &str,
+    client: &Client,
+) -> Result<String> {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+
+    let url = format!(
+        "https://www.webnovel.com/go/pcm/chapter/get-chapter-list?_csrfToken={}&bookId={}&pageIndex={}&_={}",
+        urlencoding::encode(csrf_token),
+        book_id,
+        page_index,
+        timestamp
+    );
+
+    let response = client
+        .get(&url)
+        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .header("Referer", format!("https://www.webnovel.com/book/{}/catalog", book_id))
+        .header("Accept", "application/json")
+        .send()
+        .await?
+        .error_for_status()?
+        .text()
+        .await?;
+
+    Ok(response)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
