@@ -83,7 +83,7 @@ impl Site for WebnovelSite {
         _rating_id: u32,
         _word_count: u32,
         _time_range: u32,
-        _num_pages: u32,
+        num_pages: u32,
         client: &reqwest::Client,
     ) -> Result<Stories> {
         let type_param = match keywords.as_str() {
@@ -93,15 +93,34 @@ impl Site for WebnovelSite {
             _ => "fanfic",
         };
         
-        let url = format!("https://www.webnovel.com/search?keywords={}&type={}", 
-            urlencoding::encode(&keywords), 
-            type_param
-        );
+        let mut all_stories = Vec::new();
+        let max_pages = if num_pages == 0 { 10 } else { num_pages };
+
+        for page_index in 0..max_pages {
+            let url = if page_index == 0 {
+                format!("https://www.webnovel.com/search?keywords={}&type={}", 
+                    urlencoding::encode(&keywords), 
+                    type_param
+                )
+            } else {
+                format!("https://www.webnovel.com/search?keywords={}&type={}&pageIndex={}", 
+                    urlencoding::encode(&keywords), 
+                    type_param,
+                    page_index + 1
+                )
+            };
+            
+            let html = network::fetch_via_proxy_browser(&url, client).await?;
+            let stories = webnovel::parse_search_results(&html);
+            
+            if stories.stories.is_empty() {
+                break;
+            }
+            
+            all_stories.extend(stories.stories);
+        }
         
-        let html = network::fetch_via_proxy_browser(&url, client).await?;
-        let stories = webnovel::parse_search_results(&html);
-        
-        Ok(stories)
+        Ok(Stories { stories: all_stories })
     }
 
     async fn fetch_chapters(
