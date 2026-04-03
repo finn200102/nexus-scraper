@@ -50,8 +50,16 @@ impl Site for WebnovelSite {
         chapter_number: u32,
         client: &reqwest::Client,
     ) -> Result<Chapter> {
-        let url = format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}");
-        let html = network::fetch_via_proxy_browser(&url, client).await?;
+        let url_new = format!("https://www.webnovel.com/book/{story_id}/{chapter_id}");
+        let url_old = format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}");
+
+        let (html, url_used) = match network::fetch_via_proxy_browser(&url_new, client).await {
+            Ok(html) if webnovel::parse_chapter_content(&html).is_some() => (html, url_new),
+            _ => {
+                let html = network::fetch_via_proxy_browser(&url_old, client).await?;
+                (html, url_old)
+            }
+        };
         
         let title = webnovel::parse_chapter_title(&html);
         let text = webnovel::parse_chapter_content(&html);
@@ -62,7 +70,7 @@ impl Site for WebnovelSite {
             text,
             chapter_number: Some(chapter_number),
             chapter_id: Some(chapter_id),
-            url: Some(format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}")),
+            url: Some(url_used),
         })
     }
 
@@ -149,9 +157,23 @@ impl Site for WebnovelSite {
         for i in 0..chapters.len() {
             let ch_id = chapters[i].chapter_id;
             let c_num = chapters[i].chapter_number;
+            let url = chapters[i].url.clone();
+
+            if chapters[i].text.is_some() {
+                continue;
+            }
 
             if let (Some(chapter_id), Some(chapter_number)) = (ch_id, c_num) {
-                if let Ok(full_chapter) = self.fetch_chapter(story_id, chapter_id, chapter_number, client).await {
+                if let Some(ref chapter_url) = url {
+                    if let Ok(full_chapter) = fetch_chapter_content_from_url(
+                        chapter_url,
+                        chapter_number,
+                        Some(chapter_id),
+                        client
+                    ).await {
+                        chapters[i].text = full_chapter.text;
+                    }
+                } else if let Ok(full_chapter) = self.fetch_chapter(story_id, chapter_id, chapter_number, client).await {
                     chapters[i].text = full_chapter.text;
                     chapters[i].url = full_chapter.url;
                 }
@@ -227,6 +249,27 @@ impl Site for WebnovelSite {
     ) -> Result<Author> {
         Err(CoreError::UnsupportedOperation("fetch_author not supported for webnovel".into()))
     }
+}
+
+async fn fetch_chapter_content_from_url(
+    url: &str,
+    chapter_number: u32,
+    chapter_id: Option<u64>,
+    client: &reqwest::Client,
+) -> Result<Chapter> {
+    let html = network::fetch_via_proxy_browser(url, client).await?;
+    
+    let title = webnovel::parse_chapter_title(&html);
+    let text = webnovel::parse_chapter_content(&html);
+    
+    Ok(Chapter {
+        site: "webnovel".to_string(),
+        title,
+        text,
+        chapter_number: Some(chapter_number),
+        chapter_id,
+        url: Some(url.to_string()),
+    })
 }
 
 fn extract_story_id(url: &str) -> Option<u64> {
