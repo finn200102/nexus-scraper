@@ -144,12 +144,13 @@ impl PySite {
                         .into_py(py)),
                     Err(e) => {
                         if let Some(nexus_core::error::CoreError::StoryNotFound(_)) = e.downcast_ref() {
+                            let site_name = detect_site_from_url(&url).unwrap_or("unknown");
                             let split: Vec<_> = url.split('/').collect();
                             let story_id = split.get(4).and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
                             Ok(Py::new(
                                 py,
                                 PyStory {
-                                    site: "fanfiction".to_string(),
+                                    site: site_name.to_string(),
                                     story_name: "Story Not Found".to_string(),
                                     story_id,
                                     author_name: "".to_string(),
@@ -327,12 +328,13 @@ fn fetch_story<'py>(py: Python<'py>, url: String) -> PyResult<&'py PyAny> {
                         .into_py(py)),
                 Err(e) => {
                     if let Some(nexus_core::error::CoreError::StoryNotFound(_)) = e.downcast_ref() {
+                        let site_name = detect_site_from_url(&url).unwrap_or("unknown");
                         let split: Vec<_> = url.split('/').collect();
                         let story_id = split.get(4).and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
                         Ok(Py::new(
                             py,
                             PyStory {
-                                site: "fanfiction".to_string(),
+                                site: site_name.to_string(),
                                 story_name: "Story Not Found".to_string(),
                                 story_id,
                                 author_name: "".to_string(),

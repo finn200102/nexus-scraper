@@ -146,3 +146,15 @@ fn test_has_more_chapters_invalid_json() {
     let json = "not valid json";
     assert!(!webnovel::has_more_chapters(json));
 }
+
+#[test]
+fn test_is_story_not_found() {
+    let html = r#"<div class="err-con"> <img cross-origin="anonymous" class="err-img" src="//www.yueimg.com/en/images/404.d076de86.png" srcset="//www.yueimg.com/en/images/4042x.73a13fe3.png 2x" width="200" height="200" alt="404"> <h3 class="err-title">Whoops! </h3> <p class="err-txt"> <span class="db">We might have some troubles to find out this page.</span> Please try again or <a href="/" title="back to home">Back to home</a> </p> </div>"#;
+    assert!(webnovel::is_story_not_found(html));
+}
+
+#[test]
+fn test_is_story_not_found_false() {
+    let html = r#"<h1 class="pt4 pb4 oh mb4 fs36 lh40">My Story Title</h1>"#;
+    assert!(!webnovel::is_story_not_found(html));
+}

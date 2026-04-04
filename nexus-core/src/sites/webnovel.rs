@@ -199,6 +199,11 @@ impl Site for WebnovelSite {
     ) -> Result<Story> {
         let html = network::fetch_via_proxy_browser(url, client).await?;
 
+        if webnovel::is_story_not_found(&html) {
+            let story_id = extract_story_id(url);
+            return Err(CoreError::StoryNotFound(format!("Story ID {:?} not found", story_id)));
+        }
+
         let story_name = webnovel::parse_story_name(&html);
         let img_url = webnovel::parse_cover(&html);
         let author_data = webnovel::parse_author(&html);

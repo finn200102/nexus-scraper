@@ -487,3 +487,18 @@ pub fn has_more_chapters(json: &str) -> bool {
         None => false,
     }
 }
+
+pub fn is_story_not_found(html: &str) -> bool {
+    let document = Html::parse_document(html);
+
+    if let Some(selector) = Selector::parse("div.err-con").ok() {
+        if let Some(div) = document.select(&selector).next() {
+            let text: String = div.text().collect();
+            if text.contains("404") || text.contains("troubles") {
+                return true;
+            }
+        }
+    }
+
+    false
+}
