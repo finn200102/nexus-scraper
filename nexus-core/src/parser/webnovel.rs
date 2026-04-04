@@ -494,7 +494,14 @@ pub fn is_story_not_found(html: &str) -> bool {
     if let Some(selector) = Selector::parse("div.err-con").ok() {
         if let Some(div) = document.select(&selector).next() {
             let text: String = div.text().collect();
-            if text.contains("404") || text.contains("troubles") {
+            let has_404_text = text.contains("404");
+            let has_troubles = text.contains("troubles");
+            let has_404_img = div
+                .select(&Selector::parse("img[alt=\"404\"]").ok().unwrap())
+                .next()
+                .is_some();
+
+            if (has_404_text || has_404_img) && has_troubles {
                 return true;
             }
         }

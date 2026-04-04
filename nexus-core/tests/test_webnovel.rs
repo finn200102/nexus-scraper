@@ -154,7 +154,13 @@ fn test_is_story_not_found() {
 }
 
 #[test]
-fn test_is_story_not_found_false() {
-    let html = r#"<h1 class="pt4 pb4 oh mb4 fs36 lh40">My Story Title</h1>"#;
+fn test_is_story_not_found_false_404_only() {
+    let html = r#"<div class="some-other">404 error page</div>"#;
+    assert!(!webnovel::is_story_not_found(html));
+}
+
+#[test]
+fn test_is_story_not_found_false_troubles_only() {
+    let html = r#"<div class="err-con"> <p>We might have some troubles</p> </div>"#;
     assert!(!webnovel::is_story_not_found(html));
 }
