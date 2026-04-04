@@ -671,3 +671,16 @@ pub fn parse_status(html: &str) -> Option<String> {
         .to_string()
         .into()
 }
+
+pub fn is_story_not_found(html: &str) -> bool {
+    let document = Html::parse_document(html);
+    let panel_warning_selector = Selector::parse("div.panel_warning").ok();
+
+    if let Some(selector) = panel_warning_selector {
+        if let Some(panel) = document.select(&selector).next() {
+            let text: String = panel.text().collect();
+            return text.contains("Story Not Found");
+        }
+    }
+    false
+}

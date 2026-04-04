@@ -63,6 +63,8 @@ struct PyStory {
     chapter_count: u64,
     #[pyo3(get)]
     url: String,
+    #[pyo3(get)]
+    story_not_found: bool,
 }
 
 #[pyclass]
@@ -98,13 +100,13 @@ impl PySite {
         let site = self.site.clone();
         let client = self.client.clone();
         future_into_py(py, async move {
-            let story = site
+            let story_result = site
                 .get_story_data_from_url(&url, &client)
-                .await
-                .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-            
+                .await;
+
             Python::with_gil(|py| {
-                Ok(Py::new(
+                match story_result {
+                    Ok(story) => Ok(Py::new(
                         py,
                         PyStory {
                             site: story.site,
@@ -136,9 +138,44 @@ impl PySite {
                                     url: chap.url.unwrap_or_default(),
                                 })
                                 .collect(),
+                            story_not_found: false,
                         }
-                                )?
-                                .into_py(py))
+                        )?
+                        .into_py(py)),
+                    Err(e) => {
+                        if let Some(nexus_core::error::CoreError::StoryNotFound(_)) = e.downcast_ref() {
+                            let split: Vec<_> = url.split('/').collect();
+                            let story_id = split.get(4).and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
+                            Ok(Py::new(
+                                py,
+                                PyStory {
+                                    site: "fanfiction".to_string(),
+                                    story_name: "Story Not Found".to_string(),
+                                    story_id,
+                                    author_name: "".to_string(),
+                                    author_id: 0,
+                                    description: "".to_string(),
+                                    img_url: "".to_string(),
+                                    word_count: 0,
+                                    reviews: 0,
+                                    favorites: 0,
+                                    follows: 0,
+                                    publish_date: "".to_string(),
+                                    updated_date: "".to_string(),
+                                    status: "".to_string(),
+                                    views: 0,
+                                    rating: 0.0,
+                                    chapter_count: 0,
+                                    url: url.clone(),
+                                    chapters: vec![],
+                                    story_not_found: true,
+                                }
+                            )?.into_py(py))
+                        } else {
+                            Err(pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))
+                        }
+                    }
+                }
             })
         })
     }
@@ -229,6 +266,7 @@ impl PySite {
                                 chapter_count: s.chapter_count.unwrap_or_default(),
                                 url: s.url.unwrap_or_default(),
                                 chapters: vec![],
+                                story_not_found: false,
                             })
                             .collect(),
                     },
@@ -245,47 +283,82 @@ fn fetch_story<'py>(py: Python<'py>, url: String) -> PyResult<&'py PyAny> {
         let site_name = detect_site_from_url(&url).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
         let site = get_site(site_name).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
         let client = Client::new();
-        let story = site
+        let story_result = site
             .get_story_data_from_url(&url, &client)
-            .await
-            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-        
+            .await;
+
         Python::with_gil(|py| {
-            Ok(Py::new(
-                    py,
-                    PyStory {
-                        site: story.site,
-                        story_name: story.story_name.unwrap_or_default(),
-                        story_id: story.story_id.unwrap_or_default(),
-                        author_name: story.author_name.unwrap_or_default(),
-                        author_id: story.author_id.unwrap_or_default(),
-                        description: story.description.unwrap_or_default(),
-                        img_url: story.img_url.unwrap_or_default(),
-                        word_count: story.word_count.unwrap_or_default(),
-                        reviews: story.reviews.unwrap_or_default(),
-                        favorites: story.favorites.unwrap_or_default(),
-                        follows: story.follows.unwrap_or_default(),
-                        publish_date: story.publish_date.unwrap_or_default(),
-                        updated_date: story.updated_date.unwrap_or_default(),
-                        status: story.status.unwrap_or_default(),
-                        views: story.views.unwrap_or_default(),
-                        rating: story.rating.unwrap_or_default(),
-                        chapter_count: story.chapter_count.unwrap_or_default(),
-                        url: story.url.unwrap_or_default(),
-                        chapters: story.chapters
-                            .into_iter()
-                            .map(|chap| PyChapter {
-                                site: chap.site,
-                                title: chap.title.unwrap_or_default(),
-                                text: chap.text.unwrap_or_default(),
-                                chapter_number: chap.chapter_number.unwrap_or(0),
-                                chapter_id: chap.chapter_id.unwrap_or(0),
-                                url: chap.url.unwrap_or_default(),
-                            })
-                            .collect(),
+            match story_result {
+                Ok(story) => Ok(Py::new(
+                        py,
+                        PyStory {
+                            site: story.site,
+                            story_name: story.story_name.unwrap_or_default(),
+                            story_id: story.story_id.unwrap_or_default(),
+                            author_name: story.author_name.unwrap_or_default(),
+                            author_id: story.author_id.unwrap_or_default(),
+                            description: story.description.unwrap_or_default(),
+                            img_url: story.img_url.unwrap_or_default(),
+                            word_count: story.word_count.unwrap_or_default(),
+                            reviews: story.reviews.unwrap_or_default(),
+                            favorites: story.favorites.unwrap_or_default(),
+                            follows: story.follows.unwrap_or_default(),
+                            publish_date: story.publish_date.unwrap_or_default(),
+                            updated_date: story.updated_date.unwrap_or_default(),
+                            status: story.status.unwrap_or_default(),
+                            views: story.views.unwrap_or_default(),
+                            rating: story.rating.unwrap_or_default(),
+                            chapter_count: story.chapter_count.unwrap_or_default(),
+                            url: story.url.unwrap_or_default(),
+                            chapters: story.chapters
+                                .into_iter()
+                                .map(|chap| PyChapter {
+                                    site: chap.site,
+                                    title: chap.title.unwrap_or_default(),
+                                    text: chap.text.unwrap_or_default(),
+                                    chapter_number: chap.chapter_number.unwrap_or(0),
+                                    chapter_id: chap.chapter_id.unwrap_or(0),
+                                    url: chap.url.unwrap_or_default(),
+                                })
+                                .collect(),
+                            story_not_found: false,
+                        }
+                        )?
+                        .into_py(py)),
+                Err(e) => {
+                    if let Some(nexus_core::error::CoreError::StoryNotFound(_)) = e.downcast_ref() {
+                        let split: Vec<_> = url.split('/').collect();
+                        let story_id = split.get(4).and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
+                        Ok(Py::new(
+                            py,
+                            PyStory {
+                                site: "fanfiction".to_string(),
+                                story_name: "Story Not Found".to_string(),
+                                story_id,
+                                author_name: "".to_string(),
+                                author_id: 0,
+                                description: "".to_string(),
+                                img_url: "".to_string(),
+                                word_count: 0,
+                                reviews: 0,
+                                favorites: 0,
+                                follows: 0,
+                                publish_date: "".to_string(),
+                                updated_date: "".to_string(),
+                                status: "".to_string(),
+                                views: 0,
+                                rating: 0.0,
+                                chapter_count: 0,
+                                url: url.clone(),
+                                chapters: vec![],
+                                story_not_found: true,
+                            }
+                        )?.into_py(py))
+                    } else {
+                        Err(pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))
                     }
-                            )?
-                            .into_py(py))
+                }
+            }
         })
     })
 }

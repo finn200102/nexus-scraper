@@ -23,6 +23,8 @@ pub enum CoreError {
     #[error("Invalid Url error: {0}")]
     InvalidUrl(String),
 
+    #[error("Story not found: {0}")]
+    StoryNotFound(String),
 }
 
 pub type Result<T> = std::result::Result<T, CoreError>;

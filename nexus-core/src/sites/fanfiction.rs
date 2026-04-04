@@ -151,6 +151,10 @@ impl Site for FanFictionSite {
         let url = format!("https://www.fanfiction.net/s/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
         
+        if fanfiction::is_story_not_found(&html) {
+            return Err(CoreError::StoryNotFound(format!("Story ID {} not found", story_id)));
+        }
+        
         let mut chapters = fanfiction::parse_fanfiction_chapters(&html);
         
         if chapters.is_empty() {

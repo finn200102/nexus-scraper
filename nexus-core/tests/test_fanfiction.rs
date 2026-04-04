@@ -93,3 +93,15 @@ fn test_parse_fanfiction_chapter_layout() {
         "Chapter 1: Title\n\nFirst line\nSecond line\n\nAnother paragraph with formatting."
     );
 }
+
+#[test]
+fn test_is_story_not_found() {
+    let html = r#"<div id="content_wrapper_inner" style="padding:0.5em;"><div class="panel_warning"><span class="gui_warning">Story Not Found<hr size="1" noshade="">Story is unavailable for reading. (A)</span></div></div>"#;
+    assert!(fanfiction::is_story_not_found(html));
+}
+
+#[test]
+fn test_is_story_not_found_false() {
+    let html = r#"<div id="profile_top"><b>My Story Title</b></div>"#;
+    assert!(!fanfiction::is_story_not_found(html));
+}
