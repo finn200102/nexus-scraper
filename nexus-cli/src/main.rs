@@ -253,8 +253,6 @@ async fn main() -> Result<()> {
 
     info!("Starting nexus-cli");
 
-    let client = reqwest::Client::new();
-
     match args.command {
         Commands::FetchChapter {
             site,
@@ -262,6 +260,8 @@ async fn main() -> Result<()> {
             chapter_id,
             chapter_number,
         } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_chapter(site, story_id, chapter_id, chapter_number, &client).await?;
         }
         Commands::FetchAuthorStories {
@@ -269,12 +269,18 @@ async fn main() -> Result<()> {
             author_id,
             author_name,
         } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_author_stories(site, author_id, author_name, &client).await?;
         }
         Commands::FetchChapters { site, story_id } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_chapters(site, story_id, &client).await?;
         }
         Commands::FetchChaptersContent { site, story_id } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_chapters_content(site, story_id, &client).await?;
         }
         Commands::FetchStoriesBySeries {
@@ -287,6 +293,8 @@ async fn main() -> Result<()> {
             time_range,
             num_pages,
         } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_stories_by_series(
                 site,
                 medium_name,
@@ -305,14 +313,22 @@ async fn main() -> Result<()> {
             sortby_id,
             num_pages,
         } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_stories(site, sortby_id, num_pages, &client).await?;
         }
 
         Commands::FetchAuthor { site, story_id } => {
+            get_site(&site)?;
+            let client = reqwest::Client::new();
             handle_fetch_author(site, story_id, &client).await?;
         }
 
         Commands::GetStoryDataFromUrl { site, url } => {
+            if let Some(ref site_name) = site {
+                get_site(site_name)?;
+            }
+            let client = reqwest::Client::new();
             handle_get_story_data_from_url(site, url, &client).await?;
         }
     }

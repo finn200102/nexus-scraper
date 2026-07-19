@@ -9,6 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.20", features = ["extension-module"] }
 pyo3-asyncio = { version = "0.20", features = ["tokio-runtime"] }
-reqwest = { version = "0.11", features = ["rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
 nexus-core = { path = "../nexus-core" }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

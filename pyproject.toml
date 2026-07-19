@@ -1,0 +1,18 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "nexus-scraper"
+version = "0.1.0"
+description = "Rust-backed webnovel metadata and chapter scraper for Nexus"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+]
+
+[tool.maturin]
+manifest-path = "pybindings/Cargo.toml"
+module-name = "pybindings"

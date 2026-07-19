@@ -1,0 +1,4 @@
+[env]
+# PyO3 0.20 predates Python 3.14. The bindings use the stable ABI and are
+# exercised in CI through maturin, so opt into PyO3's documented compatibility mode.
+PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1"

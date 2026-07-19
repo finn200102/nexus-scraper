@@ -375,6 +375,19 @@ Tests are located in:
 2. Add test in `nexus-core/tests/test_{site}.rs`
 3. Use `include_str!("fixtures/{site}/file.html")` to load fixtures
 
+### Python package
+
+The scraper is packaged as `nexus-scraper`, exposing the `pybindings` module.
+Build a wheel from the repository root so the Python package version and Rust
+extension are released together:
+
+```sh
+maturin build --release
+```
+
+`PYO3_USE_ABI3_FORWARD_COMPATIBILITY` is configured in `.cargo/config.toml`
+for local Python 3.14 builds until the async binding stack supports it natively.
+
 ## Troubleshooting
 
 ### "Flaresolver not responding"
