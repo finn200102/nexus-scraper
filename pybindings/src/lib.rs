@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 use nexus_core::sites::{get_site, Site as Site};
-use nexus_core::detect_site_from_url;
+use nexus_core::{create_http_client, detect_site_from_url};
 use pyo3_asyncio::tokio::future_into_py;
 use std::sync::Arc;
 use reqwest::Client;
@@ -92,7 +92,7 @@ impl PySite {
             .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         Ok(Self {
             site,
-            client: Client::new(),
+            client: create_http_client(),
         })
     }
 
@@ -361,7 +361,7 @@ fn fetch_story<'py>(py: Python<'py>, url: String) -> PyResult<&'py PyAny> {
     future_into_py(py, async move {
         let site_name = detect_site_from_url(&url).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
         let site = get_site(site_name).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-        let client = Client::new();
+        let client = create_http_client();
         let story_result = site
             .get_story_data_from_url(&url, &client)
             .await;

@@ -7,6 +7,14 @@ use tokio::time::{sleep, Duration};
 const DIRECT_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 const PROXY_REQUEST_TIMEOUT: Duration = Duration::from_secs(100);
 
+pub fn create_http_client() -> Client {
+    // Reqwest's automatic macOS system-proxy lookup can panic in headless
+    // processes. Nexus uses FLARESOLVERR_URL explicitly for protected sites.
+    Client::builder()
+        .no_proxy()
+        .build()
+        .expect("failed to construct HTTP client")
+}
 
 pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
     let url_lower = url.to_lowercase();

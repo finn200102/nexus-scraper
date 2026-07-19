@@ -6,4 +6,4 @@ pub mod network;
 pub mod parser;
 pub mod sites;
 
-pub use network::{detect_site_from_url, parse_date};
+pub use network::{create_http_client, detect_site_from_url, parse_date};
