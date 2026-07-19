@@ -45,9 +45,13 @@ pub fn parse_chapters(html: &str) -> Vec<Chapter> {
                 site: "royalroad".to_string(),
                 title: Some(rc.title),
                 text: None,
-                chapter_number: Some(rc.order),
+                chapter_number: Some(rc.order + 1),
                 chapter_id: Some(rc.id),
-                url: Some(rc.url),
+                url: Some(if rc.url.starts_with("http") {
+                    rc.url
+                } else {
+                    format!("https://www.royalroad.com{}", rc.url)
+                }),
             })
             .collect(),
         Err(_) => vec![],

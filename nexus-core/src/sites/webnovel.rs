@@ -1,23 +1,21 @@
-use crate::network;
-use crate::error::Result;
 use crate::error::CoreError;
-use crate::sites::Site;
-use crate::models::{Stories, Story, Author, Chapter};
+use crate::error::Result;
+use crate::models::{Author, Chapter, Stories, Story};
+use crate::network;
 use crate::parser::webnovel;
+use crate::sites::Site;
 
 pub struct WebnovelSite;
 
-async fn fetch_chapters_via_api(
-    story_id: u64,
-    client: &reqwest::Client,
-) -> Result<Vec<Chapter>> {
+async fn fetch_chapters_via_api(story_id: u64, client: &reqwest::Client) -> Result<Vec<Chapter>> {
     let csrf_token = network::fetch_webnovel_csrf_token(client).await?;
 
     let mut all_chapters = Vec::new();
     let mut page_index: u32 = 0;
 
     loop {
-        let json = network::fetch_webnovel_chapter_list(story_id, page_index, &csrf_token, client).await?;
+        let json =
+            network::fetch_webnovel_chapter_list(story_id, page_index, &csrf_token, client).await?;
 
         let chapters = webnovel::parse_chapter_list_api(&json);
 
@@ -51,7 +49,8 @@ impl Site for WebnovelSite {
         client: &reqwest::Client,
     ) -> Result<Chapter> {
         let url_new = format!("https://www.webnovel.com/book/{story_id}/{chapter_id}");
-        let url_old = format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}");
+        let url_old =
+            format!("https://www.webnovel.com/book/{story_id}_{story_id}/chapter_{chapter_id}");
 
         let (html, url_used) = match network::fetch_via_proxy_browser(&url_new, client).await {
             Ok(html) if webnovel::parse_chapter_content(&html).is_some() => (html, url_new),
@@ -60,10 +59,10 @@ impl Site for WebnovelSite {
                 (html, url_old)
             }
         };
-        
+
         let title = webnovel::parse_chapter_title(&html);
         let text = webnovel::parse_chapter_content(&html);
-        
+
         Ok(Chapter {
             site: self.name().to_string(),
             title,
@@ -80,7 +79,9 @@ impl Site for WebnovelSite {
         _author_name: String,
         _client: &reqwest::Client,
     ) -> Result<Stories> {
-        Err(CoreError::UnsupportedOperation("fetch_author_stories not supported for webnovel".into()))
+        Err(CoreError::UnsupportedOperation(
+            "fetch_author_stories not supported for webnovel".into(),
+        ))
     }
 
     async fn fetch_stories_by_series(
@@ -96,39 +97,43 @@ impl Site for WebnovelSite {
     ) -> Result<Stories> {
         let type_param = match keywords.as_str() {
             "fanfic" | "fanfic-anime-comics" => "fanfic",
-            "original" => "original", 
+            "original" => "original",
             "comics" => "comics",
             _ => "fanfic",
         };
-        
+
         let mut all_stories = Vec::new();
         let max_pages = if num_pages == 0 { 10 } else { num_pages };
 
         for page_index in 0..max_pages {
             let url = if page_index == 0 {
-                format!("https://www.webnovel.com/search?keywords={}&type={}", 
-                    urlencoding::encode(&keywords), 
+                format!(
+                    "https://www.webnovel.com/search?keywords={}&type={}",
+                    urlencoding::encode(&keywords),
                     type_param
                 )
             } else {
-                format!("https://www.webnovel.com/search?keywords={}&type={}&pageIndex={}", 
-                    urlencoding::encode(&keywords), 
+                format!(
+                    "https://www.webnovel.com/search?keywords={}&type={}&pageIndex={}",
+                    urlencoding::encode(&keywords),
                     type_param,
                     page_index + 1
                 )
             };
-            
+
             let html = network::fetch_via_proxy_browser(&url, client).await?;
             let stories = webnovel::parse_search_results(&html);
-            
+
             if stories.stories.is_empty() {
                 break;
             }
-            
+
             all_stories.extend(stories.stories);
         }
-        
-        Ok(Stories { stories: all_stories })
+
+        Ok(Stories {
+            stories: all_stories,
+        })
     }
 
     async fn fetch_chapters(
@@ -169,11 +174,16 @@ impl Site for WebnovelSite {
                         chapter_url,
                         chapter_number,
                         Some(chapter_id),
-                        client
-                    ).await {
+                        client,
+                    )
+                    .await
+                    {
                         chapters[i].text = full_chapter.text;
                     }
-                } else if let Ok(full_chapter) = self.fetch_chapter(story_id, chapter_id, chapter_number, client).await {
+                } else if let Ok(full_chapter) = self
+                    .fetch_chapter(story_id, chapter_id, chapter_number, client)
+                    .await
+                {
                     chapters[i].text = full_chapter.text;
                     chapters[i].url = full_chapter.url;
                 }
@@ -189,14 +199,12 @@ impl Site for WebnovelSite {
         _num_pages: u32,
         _client: &reqwest::Client,
     ) -> Result<Vec<Story>> {
-        Err(CoreError::UnsupportedOperation("fetch_stories not supported for webnovel".into()))
+        Err(CoreError::UnsupportedOperation(
+            "fetch_stories not supported for webnovel".into(),
+        ))
     }
 
-    async fn get_story_data_from_url(
-        &self,
-        url: &str,
-        client: &reqwest::Client,
-    ) -> Result<Story> {
+    async fn get_story_data_from_url(&self, url: &str, client: &reqwest::Client) -> Result<Story> {
         let html = network::fetch_via_proxy_browser(url, client).await?;
 
         if webnovel::is_story_not_found(&html) {
@@ -247,12 +255,10 @@ impl Site for WebnovelSite {
         })
     }
 
-    async fn fetch_author(
-        &self,
-        _story_id: u64,
-        _client: &reqwest::Client,
-    ) -> Result<Author> {
-        Err(CoreError::UnsupportedOperation("fetch_author not supported for webnovel".into()))
+    async fn fetch_author(&self, _story_id: u64, _client: &reqwest::Client) -> Result<Author> {
+        Err(CoreError::UnsupportedOperation(
+            "fetch_author not supported for webnovel".into(),
+        ))
     }
 }
 
@@ -263,10 +269,10 @@ async fn fetch_chapter_content_from_url(
     client: &reqwest::Client,
 ) -> Result<Chapter> {
     let html = network::fetch_via_proxy_browser(url, client).await?;
-    
+
     let title = webnovel::parse_chapter_title(&html);
     let text = webnovel::parse_chapter_content(&html);
-    
+
     Ok(Chapter {
         site: "webnovel".to_string(),
         title,

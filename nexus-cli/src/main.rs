@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
+use nexus_core::detect_site_from_url;
 use nexus_core::error::Result;
 use nexus_core::sites::get_site;
-use nexus_core::detect_site_from_url;
 use tracing::info;
 
 #[derive(Parser)]
@@ -9,7 +9,7 @@ use tracing::info;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
-    
+
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
 }
@@ -90,8 +90,7 @@ enum Commands {
         time_range: u32,
         #[arg(long, default_value = "1")]
         num_pages: u32,
-    }
-        
+    },
 }
 
 async fn handle_fetch_chapter(
@@ -101,16 +100,16 @@ async fn handle_fetch_chapter(
     chapter_number: u32,
     client: &reqwest::Client,
 ) -> Result<()> {
-
     let site = get_site(&site)?;
-    let chapter = site.fetch_chapter(story_id, chapter_id, chapter_number, &client).await?;
+    let chapter = site
+        .fetch_chapter(story_id, chapter_id, chapter_number, &client)
+        .await?;
     // TODO: check if the chapter_number was give or if chapter_number must be extracted from
     // chapter
     let filename = format!("chapter{}.html", chapter_number);
     tokio::fs::write(&filename, chapter.text.unwrap_or_else(|| String::new())).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
 
 async fn handle_fetch_chapters(
@@ -125,55 +124,44 @@ async fn handle_fetch_chapters(
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
 
 async fn handle_fetch_chapters_content(
     site: String,
     story_id: u64,
     client: &reqwest::Client,
-    ) -> Result<()> {
+) -> Result<()> {
     let site = get_site(&site)?;
     info!("Fetching chapters content for story {}", story_id);
-    
+
     let chapters = site.fetch_chapters_content(story_id, &client).await?;
     info!("Fetched {} chapters", chapters.len());
-    
+
     let filename = format!("chapters{}.json", story_id);
     let json = serde_json::to_string_pretty(&chapters)?;
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
-
 }
-   
 
-
- 
-   
 async fn handle_fetch_author_stories(
     site: String,
     author_id: u64,
     author_name: String,
     client: &reqwest::Client,
 ) -> Result<()> {
-
     let site = get_site(&site)?;
-    let stories = site.fetch_author_stories(author_id, author_name, &client).await?;
+    let stories = site
+        .fetch_author_stories(author_id, author_name, &client)
+        .await?;
     let filename = format!("author_{}_stories.json", author_id);
     let json = serde_json::to_string_pretty(&stories)?;
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
 
-async fn handle_fetch_author(
-    site: String,
-    story_id: u64,
-    client: &reqwest::Client,
-) -> Result<()> {
+async fn handle_fetch_author(site: String, story_id: u64, client: &reqwest::Client) -> Result<()> {
     let site = get_site(&site)?;
     let author = site.fetch_author(story_id, &client).await?;
     let filename = format!("author_from_story{}.json", story_id);
@@ -181,9 +169,8 @@ async fn handle_fetch_author(
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
- 
+
 async fn handle_fetch_stories_by_series(
     site: String,
     medium_name: String,
@@ -195,17 +182,25 @@ async fn handle_fetch_stories_by_series(
     num_pages: u32,
     client: &reqwest::Client,
 ) -> Result<()> {
-
     let site = get_site(&site)?;
-    let stories = site.fetch_stories_by_series(medium_name, &series_name, sortby_id, rating_id, word_count, time_range, num_pages, &client).await?;
+    let stories = site
+        .fetch_stories_by_series(
+            medium_name,
+            &series_name,
+            sortby_id,
+            rating_id,
+            word_count,
+            time_range,
+            num_pages,
+            &client,
+        )
+        .await?;
     let filename = format!("stories_{}.json", series_name);
     let json = serde_json::to_string_pretty(&stories)?;
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
-
 
 async fn handle_get_story_data_from_url(
     site: Option<String>,
@@ -225,11 +220,7 @@ async fn handle_get_story_data_from_url(
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
-
- 
-
 
 async fn handle_fetch_stories(
     site: String,
@@ -237,7 +228,6 @@ async fn handle_fetch_stories(
     num_pages: u32,
     client: &reqwest::Client,
 ) -> Result<()> {
-
     let site = get_site(&site)?;
     let stories = site.fetch_stories(sortby_id, num_pages, &client).await?;
     let filename = format!("stories_{}.json", sortby_id);
@@ -245,28 +235,24 @@ async fn handle_fetch_stories(
     tokio::fs::write(&filename, json).await?;
     println!("Saved to {}", filename);
     Ok(())
-
 }
-        
-
-        
 
 #[tokio::main]
-async fn main() -> Result<()> { 
+async fn main() -> Result<()> {
     let args = Cli::parse();
-    
+
     let log_level = match args.verbose {
         0 => "info",
         1 => "debug",
         _ => "trace",
     };
-    
+
     tracing_subscriber::fmt()
         .with_env_filter(format!("nexus_cli={},nexus_core={}", log_level, log_level))
         .init();
-    
+
     info!("Starting nexus-cli");
-    
+
     let client = reqwest::Client::new();
 
     match args.command {
@@ -285,16 +271,10 @@ async fn main() -> Result<()> {
         } => {
             handle_fetch_author_stories(site, author_id, author_name, &client).await?;
         }
-        Commands::FetchChapters {
-            site,
-            story_id,
-        } => {
+        Commands::FetchChapters { site, story_id } => {
             handle_fetch_chapters(site, story_id, &client).await?;
         }
-        Commands::FetchChaptersContent {
-            site,
-            story_id,
-        } => {
+        Commands::FetchChaptersContent { site, story_id } => {
             handle_fetch_chapters_content(site, story_id, &client).await?;
         }
         Commands::FetchStoriesBySeries {
@@ -307,9 +287,20 @@ async fn main() -> Result<()> {
             time_range,
             num_pages,
         } => {
-            handle_fetch_stories_by_series(site, medium_name, series_name, sortby_id, rating_id, word_count, time_range, num_pages, &client).await?;
+            handle_fetch_stories_by_series(
+                site,
+                medium_name,
+                series_name,
+                sortby_id,
+                rating_id,
+                word_count,
+                time_range,
+                num_pages,
+                &client,
+            )
+            .await?;
         }
-         Commands::FetchStories {
+        Commands::FetchStories {
             site,
             sortby_id,
             num_pages,
@@ -317,21 +308,13 @@ async fn main() -> Result<()> {
             handle_fetch_stories(site, sortby_id, num_pages, &client).await?;
         }
 
-         Commands::FetchAuthor {
-             site,
-             story_id,
-         } => {
-             handle_fetch_author(site, story_id, &client).await?;
-         }
+        Commands::FetchAuthor { site, story_id } => {
+            handle_fetch_author(site, story_id, &client).await?;
+        }
 
-         Commands::GetStoryDataFromUrl {
-             site,
-             url,
-         } => {
-             handle_get_story_data_from_url(site, url, &client).await?;
-         }
+        Commands::GetStoryDataFromUrl { site, url } => {
+            handle_get_story_data_from_url(site, url, &client).await?;
+        }
     }
     Ok(())
 }
-
-

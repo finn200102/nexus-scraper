@@ -8,6 +8,20 @@ fn test_parse_description() {
 }
 
 #[test]
+fn test_parse_story_title() {
+    let html = r#"<h2 class="title heading">A Clean AO3 Title</h2>"#;
+    let result = archive::parse_story_title(html);
+    assert_eq!(result, Some("A Clean AO3 Title".to_string()));
+}
+
+#[test]
+fn test_parse_chapter_count() {
+    let html = r#"<dd class="chapters">7/12</dd>"#;
+    let result = archive::parse_chapter_count(html);
+    assert_eq!(result, Some(12));
+}
+
+#[test]
 fn test_parse_tags() {
     let html = r#"<dd class="freeform"><a href="/tags/1">Action</a></dd>"#;
     let result = archive::parse_tags(html);

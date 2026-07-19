@@ -2,7 +2,7 @@ use nexus_core::parser::royalroad;
 
 #[test]
 fn test_parse_chapters_from_json() {
-    let html = r#"<script>window.chapters = [{"id": 123, "title": "Chapter 1", "order": 1, "url": "/fiction/1/chapter/123"}]</script>"#;
+    let html = r#"<script>window.chapters = [{"id": 123, "title": "Chapter 1", "order": 0, "url": "/fiction/1/chapter/123"}]</script>"#;
     let result = royalroad::parse_chapters(html);
     assert_eq!(result.len(), 1);
 
@@ -10,7 +10,10 @@ fn test_parse_chapters_from_json() {
     assert_eq!(first.chapter_id, Some(123));
     assert_eq!(first.title, Some("Chapter 1".to_string()));
     assert_eq!(first.chapter_number, Some(1));
-    assert_eq!(first.url, Some("/fiction/1/chapter/123".to_string()));
+    assert_eq!(
+        first.url,
+        Some("https://www.royalroad.com/fiction/1/chapter/123".to_string())
+    );
 }
 
 #[test]

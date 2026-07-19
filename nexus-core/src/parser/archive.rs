@@ -57,6 +57,18 @@ pub fn parse_archive_chapters(html: &str) -> Vec<Chapter> {
     chapters
 }
 
+pub fn parse_story_title(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("h2.title.heading").ok()?;
+
+    document
+        .select(&selector)
+        .next()
+        .map(|el| el.text().collect::<String>())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
 /// Parses the description of a fanfiction.net story
 pub fn parse_description(html: &str) -> String {
     let document = Html::parse_document(html);
@@ -176,6 +188,19 @@ pub fn parse_updated_date(html: &str) -> Option<String> {
         .collect::<String>();
 
     parse_date(&date_str)
+}
+
+pub fn parse_chapter_count(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse("dd.chapters").ok()?;
+    let text = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
+    let total = text.split('/').next_back()?.trim();
+
+    total.parse::<u64>().ok()
 }
 
 pub fn parse_word_count(html: &str) -> Option<u64> {

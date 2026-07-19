@@ -1,9 +1,9 @@
-use crate::{network};
-use crate::error::Result;
 use crate::error::CoreError;
-use crate::sites::Site;
-use crate::models::{Story, Stories, Chapter, Author};
+use crate::error::Result;
+use crate::models::{Author, Chapter, Stories, Story};
+use crate::network;
 use crate::parser::spacebattles;
+use crate::sites::Site;
 
 pub struct SpacebattlesSite;
 
@@ -25,11 +25,8 @@ impl Site for SpacebattlesSite {
         let chapter = spacebattles::parse_spacebattles_chapter(&html, chapter_id, chapter_number);
 
         Ok(chapter)
- 
     }
 
-
-    
     async fn fetch_chapters(
         &self,
         story_id: u64,
@@ -41,7 +38,9 @@ impl Site for SpacebattlesSite {
         let mut all_chapters = Vec::new();
         // pages+1 TODO find out why
         for page_number in 1..pages {
-            let url = format!("https://forums.spacebattles.com/threads/{story_id}/reader/page-{page_number}");
+            let url = format!(
+                "https://forums.spacebattles.com/threads/{story_id}/reader/page-{page_number}"
+            );
             let html = network::fetch_via_proxy(&url, client).await?;
             let chapters = spacebattles::parse_spacebattles_chapters(&html);
             all_chapters.extend(chapters);
@@ -49,7 +48,9 @@ impl Site for SpacebattlesSite {
 
         for chapter in all_chapters.iter_mut() {
             if let Some(chapter_id) = chapter.chapter_id {
-                chapter.url = Some(format!("https://forums.spacebattles.com/posts/{chapter_id}"));
+                chapter.url = Some(format!(
+                    "https://forums.spacebattles.com/posts/{chapter_id}"
+                ));
             }
         }
 
@@ -57,11 +58,8 @@ impl Site for SpacebattlesSite {
             chapter.chapter_number = Some((i as u32) + 1)
         }
 
-
         Ok(all_chapters)
-        
     }
-
 
     async fn fetch_chapters_content(
         &self,
@@ -69,21 +67,22 @@ impl Site for SpacebattlesSite {
         client: &reqwest::Client,
     ) -> Result<Vec<Chapter>> {
         let mut chapters = self.fetch_chapters(story_id, client).await?;
-        
+
         for chapter in &mut chapters {
             if let Some(chapter_id) = chapter.chapter_id {
                 let url = format!("https://forums.spacebattles.com/posts/{}/", chapter_id);
                 let html = network::fetch_via_proxy(&url, client).await?;
-                let full_chapter = spacebattles::parse_spacebattles_chapter(&html, chapter_id, chapter.chapter_number.unwrap_or(0));
+                let full_chapter = spacebattles::parse_spacebattles_chapter(
+                    &html,
+                    chapter_id,
+                    chapter.chapter_number.unwrap_or(0),
+                );
                 chapter.text = full_chapter.text;
             }
         }
 
         Ok(chapters)
     }
-
-
-
 
     async fn fetch_author_stories(
         &self,
@@ -94,10 +93,7 @@ impl Site for SpacebattlesSite {
         Err(CoreError::UnsupportedOperation(
             "fetch_author_stories not supported for spacebattles".into(),
         ))
- 
-   }
-
-
+    }
 
     async fn fetch_stories_by_series(
         &self,
@@ -113,15 +109,13 @@ impl Site for SpacebattlesSite {
         Err(CoreError::UnsupportedOperation(
             "fetch_stories_by_series not supported for spacebattles".into(),
         ))
-  
-   }
+    }
 
     async fn fetch_stories(
         &self,
         sortby_id: u32,
         num_pages: u32,
         client: &reqwest::Client,
-        
     ) -> Result<Vec<Story>> {
         let sortby_name = sortby_id_to_name(sortby_id);
         let mut all_stories = Vec::new();
@@ -132,23 +126,18 @@ impl Site for SpacebattlesSite {
             all_stories.extend(stories);
         }
         Ok(all_stories)
-
     }
 
-
-     async fn get_story_data_from_url(
-            &self,
-            url: &str,
-            client: &reqwest::Client,
-        ) -> Result<Story> {
-        let (story_name, story_id) = { 
-        let trimmed_url = url.trim_end_matches('/').to_string();
-        let last_segment = trimmed_url.rsplit('/').next().unwrap_or_default();
-        let (name_part, id_part) = last_segment.rsplit_once('.').unwrap_or(("", last_segment));
-        (name_part.to_string(), id_part.to_string())
-    };
-        let story_id: u64 = story_id.parse()
-        .map_err(|e| CoreError::Parse(format!("Failed to parse story_id '{story_id}': {e}")))?;
+    async fn get_story_data_from_url(&self, url: &str, client: &reqwest::Client) -> Result<Story> {
+        let (story_name, story_id) = {
+            let trimmed_url = url.trim_end_matches('/').to_string();
+            let last_segment = trimmed_url.rsplit('/').next().unwrap_or_default();
+            let (name_part, id_part) = last_segment.rsplit_once('.').unwrap_or(("", last_segment));
+            (name_part.to_string(), id_part.to_string())
+        };
+        let story_id: u64 = story_id
+            .parse()
+            .map_err(|e| CoreError::Parse(format!("Failed to parse story_id '{story_id}': {e}")))?;
 
         let chapters = self.fetch_chapters(story_id, client).await?;
         let chapter_count = chapters.len() as u64;
@@ -156,19 +145,20 @@ impl Site for SpacebattlesSite {
         let url = format!("https://forums.spacebattles.com/threads/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
         let author_data = spacebattles::parse_author_from_story(&html);
-        let author_name = author_data.author_name; 
+        let author_name = author_data.author_name;
         let author_id = author_data.author_id;
         let description = spacebattles::parse_description(&html);
 
-         let tags = spacebattles::parse_tags(&html);
-         let publish_date = spacebattles::parse_created_date(&html);
-         let status = spacebattles::parse_status(&html);
+        let tags = spacebattles::parse_tags(&html);
+        let publish_date = spacebattles::parse_created_date(&html);
+        let status = spacebattles::parse_status(&html);
 
-
-
-
-        Ok(Story{
-            story_name: if story_name.is_empty() { None } else { Some(story_name) },
+        Ok(Story {
+            story_name: if story_name.is_empty() {
+                None
+            } else {
+                Some(story_name)
+            },
             story_id: Some(story_id),
             chapters,
             author_name,
@@ -179,30 +169,22 @@ impl Site for SpacebattlesSite {
             genre: vec![],
             publish_date,
             status,
-            url: Some(format!("https://forums.spacebattles.com/threads/{story_id}/")),
+            url: Some(format!(
+                "https://forums.spacebattles.com/threads/{story_id}/"
+            )),
             chapter_count: Some(chapter_count),
             ..Default::default()
-
         })
+    }
 
-     }
-
-    async fn fetch_author(
-        &self,
-        story_id: u64,
-        client: &reqwest::Client,
-    ) -> Result<Author> {
+    async fn fetch_author(&self, story_id: u64, client: &reqwest::Client) -> Result<Author> {
         let url = format!("https://forums.spacebattles.com/threads/{}", &story_id);
         let html = network::fetch_via_proxy(&url, client).await?;
         let author = spacebattles::parse_author_from_story(&html);
 
         Ok(author)
-
-        }
-
-
+    }
 }
-
 
 fn sortby_id_to_name(sortby_id: u32) -> &'static str {
     match sortby_id {
@@ -210,4 +192,3 @@ fn sortby_id_to_name(sortby_id: u32) -> &'static str {
         _ => "Unknown",
     }
 }
-
