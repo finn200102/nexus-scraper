@@ -209,7 +209,10 @@ impl Site for WebnovelSite {
 
         if webnovel::is_story_not_found(&html) {
             let story_id = extract_story_id(url);
-            return Err(CoreError::StoryNotFound(format!("Story ID {:?} not found", story_id)));
+            return Err(CoreError::StoryNotFound(format!(
+                "Story ID {:?} not found",
+                story_id
+            )));
         }
 
         let story_name = webnovel::parse_story_name(&html);
