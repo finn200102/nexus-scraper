@@ -126,6 +126,26 @@ impl Site for FanFictionSite {
         Ok(Stories { stories: all_stories })
     }
 
+    async fn fetch_stories_by_series_page(
+        &self,
+        medium_name: String,
+        series_name: &str,
+        sortby_id: u32,
+        rating_id: u32,
+        word_count: u32,
+        time_range: u32,
+        page: u32,
+        client: &reqwest::Client,
+    ) -> Result<Stories> {
+        let page = page.max(1);
+        let url = format!(
+            "https://www.fanfiction.net/{medium_name}/{series_name}/?srt={sortby_id}&r={rating_id}&len={word_count}&t={time_range}&p={page}"
+        );
+        let html = network::fetch_via_proxy(&url, client).await?;
+
+        Ok(fanfiction::parse_fanfiction_stories_by_series(&html))
+    }
+
 
     async fn fetch_stories(
         &self,

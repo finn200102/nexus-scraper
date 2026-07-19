@@ -1,5 +1,5 @@
 use crate::models::{Chapter, Stories, Story, Author};
-use crate::error::Result;
+use crate::error::{CoreError, Result};
 use std::sync::Arc;
 
 pub mod fanfiction;
@@ -38,6 +38,22 @@ pub trait Site {
         num_pages: u32,
         client: &reqwest::Client,
     ) -> Result<Stories>;
+
+    async fn fetch_stories_by_series_page(
+        &self,
+        _medium_name: String,
+        _series_name: &str,
+        _sortby_id: u32,
+        _rating_id: u32,
+        _word_count: u32,
+        _time_range: u32,
+        _page: u32,
+        _client: &reqwest::Client,
+    ) -> Result<Stories> {
+        Err(CoreError::UnsupportedOperation(
+            "fetch_stories_by_series_page is not supported for this site".into(),
+        ))
+    }
 
     async fn fetch_chapters(
         &self,
@@ -89,4 +105,3 @@ pub fn get_site(name: &str) -> Result<Arc<dyn Site + Send + Sync>> {
         _ => Err(crate::error::CoreError::UnknownSite(name.into())),
     }
 }
-

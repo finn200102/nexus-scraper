@@ -4,6 +4,9 @@ use crate::error::{Result, CoreError};
 use chrono::NaiveDate;
 use tokio::time::{sleep, Duration};
 
+const DIRECT_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+const PROXY_REQUEST_TIMEOUT: Duration = Duration::from_secs(100);
+
 
 pub fn detect_site_from_url(url: &str) -> Result<&'static str> {
     let url_lower = url.to_lowercase();
@@ -86,6 +89,14 @@ struct ProxyResponse {
     message: Option<String>,
 }
 
+fn is_bot_protection_page(html: &str) -> bool {
+    let html = html.to_ascii_lowercase();
+    html.contains("cf-mitigated")
+        || html.contains("cf_chl_")
+        || html.contains("just a moment...")
+        || html.contains("attention required! | cloudflare")
+}
+
 pub async fn fetch_via_proxy(url: &str, client: &Client) -> Result<String> {
     fetch_via_proxy_with_options(url, client, None).await
 }
@@ -104,7 +115,12 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
         .unwrap_or_else(|_| "http://localhost:8191/v1".to_string());
 
     match fetch_direct(url, client).await {
-        Ok(html) => return Ok(html),
+        Ok(html) if !is_bot_protection_page(&html) => return Ok(html),
+        Ok(_) => {
+            if std::env::var("NEXUS_PROXY_DEBUG").is_ok() {
+                eprintln!("Direct fetch returned a bot-protection page; using proxy");
+            }
+        }
         Err(err) => {
             if std::env::var("NEXUS_PROXY_DEBUG").is_ok() {
                 eprintln!("Direct fetch failed: {}", err);
@@ -175,6 +191,7 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
             .post(&proxy_url)
             .header("Content-Type", "application/json")
             .json(&payload)
+            .timeout(PROXY_REQUEST_TIMEOUT)
             .send()
             .await?
             .json::<ProxyResponse>()
@@ -192,6 +209,17 @@ async fn fetch_via_proxy_with_options(url: &str, client: &Client, browser: Optio
         })();
 
         match result {
+            Ok(html) if is_bot_protection_page(&html) => {
+                let err = CoreError::Parse(
+                    "Proxy returned a bot-protection page instead of the requested content"
+                        .into(),
+                );
+                if attempt == 2 {
+                    return Err(err);
+                }
+                last_error = Some(err);
+                sleep(Duration::from_secs(2)).await;
+            }
             Ok(html) => return Ok(html),
             Err(err) => {
                 if attempt == 2 || !matches!(err, CoreError::Parse(_)) {
@@ -210,6 +238,7 @@ async fn fetch_direct(url: &str, client: &Client) -> Result<String> {
     let html = client
         .get(url)
         .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(DIRECT_REQUEST_TIMEOUT)
         .send()
         .await?
         .error_for_status()?
@@ -291,6 +320,21 @@ pub async fn fetch_webnovel_chapter_list(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn detects_cloudflare_challenge_pages() {
+        assert!(is_bot_protection_page(
+            r#"<meta name=\"cf-mitigated\" content=\"challenge\">"#
+        ));
+        assert!(is_bot_protection_page("<title>Just a moment...</title>"));
+    }
+
+    #[test]
+    fn does_not_reject_normal_html() {
+        assert!(!is_bot_protection_page(
+            r#"<div class=\"z-list\"><a class=\"stitle\">Story</a></div>"#
+        ));
+    }
 
     #[test]
     fn test_detect_site_fanfiction() {
